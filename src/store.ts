@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import yaml from 'js-yaml';
-import type { ProviderId } from './providers.js';
+import { PROVIDER_IDS, isProviderId, type ProviderId } from './providers.js';
 
 export interface ProviderEntry {
   api_key?: string;
@@ -37,12 +37,25 @@ export function loadConfig(): ConfigFile {
   try {
     if (!existsSync(CONFIG_PATH)) return defaultConfig();
     const raw = readFileSync(CONFIG_PATH, 'utf-8');
-    const parsed = yaml.load(raw) as Partial<ConfigFile> | undefined;
+    const parsed = yaml.load(raw) as Record<string, unknown> | undefined;
     if (!parsed || typeof parsed !== 'object') return defaultConfig();
-    return {
-      active_provider: parsed.active_provider,
-      providers: parsed.providers ?? {},
-    };
+
+    const rawProviders = (parsed.providers ?? {}) as Record<string, ProviderEntry>;
+    const providers: Partial<Record<ProviderId, ProviderEntry>> = {};
+    for (const id of PROVIDER_IDS) {
+      const e = rawProviders[id];
+      if (e && typeof e === 'object' && !Array.isArray(e)) {
+        providers[id] = e as ProviderEntry;
+      }
+    }
+
+    let active_provider: ProviderId | undefined;
+    const ap = parsed.active_provider;
+    if (ap != null && typeof ap === 'string' && isProviderId(ap)) {
+      active_provider = ap;
+    }
+
+    return { active_provider, providers };
   } catch {
     return defaultConfig();
   }

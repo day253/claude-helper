@@ -10,6 +10,8 @@
 
 配置文件：`~/.llm-providers/config.yaml`
 
+**0.4 起**仅支持带官方 Anthropic 端的 **glm / openrouter**；旧版 YAML 里其它供应商字段会在读取时**忽略**，若 `active_provider` 已失效会清空，请重新 `claude-helper` 向导或 `active`。
+
 ## 安装
 
 ```bash
@@ -48,26 +50,16 @@ GitHub 旧仓库 URL 一般会重定向到新名一段时间。
 | `claude-helper claude apply [-p id]` | 将本次计算的 `ANTHROPIC_*` **合并进** `~/.claude/settings.json` 的 `env`；**写入前备份**为 `settings.json.bak.<时间戳>` |
 | `claude-helper --help` / `claude-helper claude --help` | 帮助 |
 
-`provider`：`glm` | `kimi` | `minimax` | `openrouter` | `volcano`
+`provider`：**仅** `glm` | `openrouter`（二者均有官方 **Anthropic 兼容** 端点，可直接 `claude apply`）。
 
 ## 供应商与 Claude Code 一键 apply
 
-| 供应商 | 申请密钥提示 | OpenAI 默认 Base | 内置 Anthropic Base（`claude apply`） |
-|--------|----------------|------------------|----------------------------------------|
-| **glm** | [一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper) 或开放平台 API Keys | `https://open.bigmodel.cn/api/paas/v4` | 有 → `https://open.bigmodel.cn/api/anthropic` |
-| **kimi** | Moonshot 开放平台 → API Key | `https://api.moonshot.cn/v1` | 无（需网关，见下） |
-| **minimax** | MiniMax 开放平台 | `https://api.minimax.chat/v1` | 无 |
-| **openrouter** | OpenRouter → Keys | `https://openrouter.ai/api/v1` | 有 → `https://openrouter.ai/api`（使用 `ANTHROPIC_AUTH_TOKEN`，`ANTHROPIC_API_KEY` 为空字符串） |
-| **volcano** | 火山方舟 / 控制台 API Key | `https://ark.cn-beijing.volces.com/api/v3` | 无（地域/endpoint 以控制台为准，可 `--base` 覆盖） |
+| 供应商 | 申请密钥提示 | OpenAI 默认 Base | Anthropic Base（`claude apply`） |
+|--------|----------------|------------------|----------------------------------|
+| **glm** | [一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper) 或开放平台 API Keys | `https://open.bigmodel.cn/api/paas/v4` | `https://open.bigmodel.cn/api/anthropic` |
+| **openrouter** | OpenRouter → Keys | `https://openrouter.ai/api/v1` | `https://openrouter.ai/api`（`ANTHROPIC_AUTH_TOKEN` + 空的 `ANTHROPIC_API_KEY`） |
 
-说明：Kimi / MiniMax / 火山等一般为 **OpenAI 兼容** 端点；Claude Code 默认走 **Anthropic Messages** 形态。若厂商未提供 Anthropic 兼容 URL，需自建 **LiteLLM** 等网关，再把网关的 **Anthropic 根地址** 写入：
-
-```bash
-claude-helper set kimi --anthropic-base http://127.0.0.1:4000
-claude-helper claude apply -p kimi
-```
-
-（示例端口以你本地 LiteLLM 为准。）
+高级：若需改用自建代理根地址，可用 `claude-helper set <id> --anthropic-base <URL>` 覆盖内置 Anthropic Base。
 
 ## 与 OpenAI 生态对接
 
@@ -79,7 +71,7 @@ eval "$(claude-helper export)"
 或指定供应商：
 
 ```bash
-eval "$(claude-helper export -p volcano)"
+eval "$(claude-helper export -p openrouter)"
 ```
 
 ## 与 Claude Code 对接
@@ -94,14 +86,6 @@ claude-helper claude apply
 
 **安全提示**：`settings.json` 会包含密钥明文，请勿提交到 Git，并留意备份文件 `settings.json.bak.*` 的权限。
 
-## LiteLLM 简要流程（OpenAI-only 供应商 → Claude Code）
-
-1. 用本工具保存供应商 Key：`claude-helper set kimi --key ...`
-2. 配置 LiteLLM，使其上游使用该 Key（可用 `claude-helper export -p kimi` 得到 `OPENAI_*` 参考）
-3. 启动 LiteLLM 的 **Anthropic 兼容** 监听地址（常见为 `/v1/messages` 同源代理，具体以 [LiteLLM 文档](https://docs.litellm.ai/) 为准）
-4. `claude-helper set kimi --anthropic-base http://127.0.0.1:<端口>`（或文档给出的 anthropic 路径根）
-5. `claude-helper claude apply -p kimi`
-
 ## 与智谱官方「一键安装助手」的差异
 
 官方文档：[接入指南 · 一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper)（NPM：`@z_ai/coding-helper`，命令 `coding-helper` / `chelper`，支持 `doctor` 等）。
@@ -109,8 +93,8 @@ claude-helper claude apply
 | | 官方 Coding Tool Helper | Claude Helper（本仓库） |
 |--|-------------------------|-------------------------|
 | 范围 | 装编码工具、套餐、MCP、Claude 插件市场等 | **仅** Key、检查、`export` / `claude apply` |
-| 启动 | `npx @z_ai/coding-helper` | `claude-helper`（无参即配智谱一家） |
-| 供应商 | 以 GLM 编码套餐为中心 | GLM + Kimi、MiniMax、OpenRouter、火山等 |
+| 启动 | `npx @z_ai/coding-helper` | `claude-helper`（无参即向导选一家） |
+| 供应商 | 以 GLM 编码套餐为中心 | **仅** 内置 Anthropic 端点的 **glm、openrouter** |
 | 配置落点 | 依官方向导 | `~/.llm-providers/config.yaml` + 可选 `~/.claude/settings.json` |
 
 ## 发布到 GitHub（例如账号或组织 `day253`）

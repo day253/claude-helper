@@ -88,7 +88,7 @@ export async function validateAfterSave(cfg: ConfigFile): Promise<void> {
   } else {
     console.log(
       chalk.yellow(
-        `○ 当前默认供应商无内置 Claude 端点；Claude Code 需 LiteLLM 等网关，并设置：\n    claude-helper set ${active} --anthropic-base <网关URL>`,
+        `○ 未能解析 Anthropic Base（配置异常）；可尝试：claude-helper set ${active} --anthropic-base <URL>`,
       ),
     );
   }
@@ -122,7 +122,7 @@ function printClaudeHelp(cfg: ConfigFile, hasActiveKey: boolean, canApply: boole
   const entry = active ? cfg.providers[active] : undefined;
 
   if (!hasActiveKey || !active || !entry?.api_key?.trim()) {
-    console.log(chalk.cyan('1) 先为默认供应商保存 API Key，并设置默认：claude-helper active <供应商id>'));
+    console.log(chalk.cyan('1) 先保存 API Key，并设置默认：claude-helper active glm 或 openrouter'));
     console.log(chalk.dim('   说明：https://docs.anthropic.com/en/docs/claude-code/overview'));
     console.log(chalk.dim('   随时复查：claude-helper check\n'));
     return;
@@ -149,10 +149,10 @@ function printClaudeHelp(cfg: ConfigFile, hasActiveKey: boolean, canApply: boole
 
   console.log(
     chalk.yellow(
-      '当前默认供应商不能一键 claude apply。请先搭好 Anthropic 兼容网关（如 LiteLLM），然后：\n' +
-        `   claude-helper set ${active} --anthropic-base <你的网关根URL>\n` +
+      '无法组合 Claude 环境变量。请检查 Key 与 Base，或尝试：\n' +
+        `   claude-helper set ${active} --anthropic-base <Anthropic 兼容根 URL>\n` +
         '   claude-helper claude apply\n',
     ),
   );
-  console.log(chalk.dim('   说明见 README「LiteLLM」一节与 doc/technical-guide-zh.md\n'));
+  console.log(chalk.dim('   详见 README 与 doc/technical-guide-zh.md\n'));
 }

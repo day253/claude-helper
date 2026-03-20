@@ -12,7 +12,7 @@
 - [第 4 章：关键技术决策](#第-4-章关键技术决策)
 - [第 5 章：模块设计](#第-5-章模块设计)
 - [第 6 章：安装与配置](#第-6-章安装与配置)
-- [第 7 章：使用指南](#第-7-章使用指南)
+- [第 7 章：使用指南](#第-7-章使用指南)（含故障排查）
 - [第 8 章：开发与贡献](#第-8-章开发与贡献)
 
 ---
@@ -34,7 +34,7 @@
 |------|----------|
 | 多供应商 Key 散落在各 shell 配置里 | 统一写入 `~/.llm-providers/config.yaml` |
 | 用户不知道去哪申请 Key | 交互前打印 `keyHelp` + 官方 `docs` 链接 |
-| Claude Code 需要 Anthropic 形态端点 | 内置 `claudeAnthropicBaseUrl` 或 `anthropic_base_url`（网关）；OpenAI-only 供应商报错引导 LiteLLM |
+| Claude Code 需要 Anthropic 形态端点 | **仅收录**带官方 `claudeAnthropicBaseUrl` 的供应商（当前 glm、openrouter）；可用 `anthropic_base_url` 覆盖 |
 | 误覆盖用户 Claude 全局配置 | `claude apply` 仅合并 `env`，写入前备份 `settings.json.bak.<timestamp>` |
 
 ### 1.3 技术栈
@@ -147,7 +147,7 @@ flowchart LR
 ```mermaid
 flowchart TD
   Y[config.yaml] --> EB{effectiveClaudeBase}
-  EB -->|缺失| ERR[stderr 说明 + LiteLLM / anthropic-base]
+  EB -->|异常缺失| ERR[stderr 说明 + anthropic-base 覆盖]
   EB -->|存在| BE[buildClaudeEnv]
   BE --> RM[claudeEnvKeysToRemove]
   RM --> MG[mergeClaudeSettings]
@@ -176,11 +176,11 @@ flowchart TD
 
 选择 YAML 平衡「个人开发者可编辑」与实现成本；生产环境若需更高安全可在外层用密钥管理替代明文文件。
 
-### 4.2 为何不直接把 OpenAI Base 写入 ANTHROPIC_BASE_URL？
+### 4.2 供应商目录策略
 
-Claude Code 期望 **Anthropic Messages** 兼容端点。多数国内 OpenAI 兼容网关（Kimi、MiniMax、火山方舟等）与 Anthropic API 形态不一致。若静默映射会导致难以排查的 4xx/5xx。
+Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无官方 Anthropic 根的渠道**不再列入** `PROVIDERS`，避免用户误以为可一键 `claude apply`。
 
-**决策**：无内置 `claudeAnthropicBaseUrl` 的供应商，`claude apply` **失败并打印中文指引**，要求用户配置 LiteLLM 等后再设 `--anthropic-base`。
+**决策**：新供应商必须提供可用的 `claudeAnthropicBaseUrl` 才合并进主线；老配置里已删除的 id 在 `loadConfig` 时会被忽略。
 
 ### 4.3 settings.json 合并策略
 
@@ -201,14 +201,14 @@ Claude Code 期望 **Anthropic Messages** 兼容端点。多数国内 OpenAI 兼
 | 职责 | 说明 |
 |------|------|
 | `ProviderId` | 联合字面量类型，与 YAML 中 key 一致 |
-| `ProviderMeta` | `defaultBaseUrl`、`docs`、`keyHelp`、`claudeAnthropicBaseUrl?`、`claudeUseAuthToken?` |
+| `ProviderMeta` | `defaultBaseUrl`、`docs`、`keyHelp`、**必填** `claudeAnthropicBaseUrl`、`claudeUseAuthToken?` |
 | `PROVIDERS` | 单一数据源，扩展新供应商时只改此文件 |
 
 ### 5.2 `src/store.ts`
 
 | 导出 | 说明 |
 |------|------|
-| `loadConfig` / `saveConfig` | 读写 `~/.llm-providers/config.yaml` |
+| `loadConfig` / `saveConfig` | 读写 `~/.llm-providers/config.yaml`；`loadConfig` 只保留当前 `ProviderId`，并校验 `active_provider` |
 | `ProviderEntry` | `api_key`、`base_url`、`anthropic_base_url`、`default_model`、`note` |
 | `maskKey` | list/show 时脱敏 |
 
@@ -281,19 +281,11 @@ claude-helper active openrouter
 claude-helper claude apply
 ```
 
-### 7.3 OpenAI-only 供应商 → Claude Code（LiteLLM）
-
-1. `claude-helper set kimi --key <KEY>`
-2. 用 `claude-helper export -p kimi` 中的 `OPENAI_*` 配置 LiteLLM 上游
-3. 启动 LiteLLM 的 Anthropic 兼容监听
-4. `claude-helper set kimi --anthropic-base http://127.0.0.1:<端口>`
-5. `claude-helper claude apply -p kimi`
-
-### 7.4 故障排查
+### 7.3 故障排查
 
 | 现象 | 排查 |
 |------|------|
-| `claude apply` 报缺 Anthropic Base | 该供应商是否无内置 Anthropic URL；是否已 `--anthropic-base` |
+| `claude apply` 报缺 Anthropic Base | 配置是否损坏；尝试 `set <id> --anthropic-base` 覆盖 |
 | `settings.json 不是合法 JSON` | 手动修复或从 `settings.json.bak.*` 恢复 |
 | 切换供应商后仍走旧认证 | 确认 `ANTHROPIC_AUTH_TOKEN` 是否已被本工具删除（OpenRouter → 智谱） |
 
@@ -320,8 +312,8 @@ npm run debug -- list
 
 ### 8.2 新增供应商
 
-1. 在 `ProviderId` 与 `PROVIDERS` 中增加条目。
-2. 填写 `keyHelp`、`defaultBaseUrl`、`docs`；若官方提供 Anthropic 兼容，填 `claudeAnthropicBaseUrl` 与 `claudeUseAuthToken`。
+1. 在 `ProviderId` 与 `PROVIDERS` 中增加条目（须已核实 **Anthropic 兼容根 URL**）。
+2. 填写 `keyHelp`、`defaultBaseUrl`、`docs`、**必填** `claudeAnthropicBaseUrl`，按需 `claudeUseAuthToken`。
 3. 更新 `README.md` 供应商表与本文档相关章节。
 4. `npm run build` 通过后提交。
 

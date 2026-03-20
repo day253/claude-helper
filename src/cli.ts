@@ -21,7 +21,7 @@ import {
   type ProviderEntry,
 } from './store.js';
 
-const PROVIDER_ARG = `glm | kimi | minimax | openrouter | volcano`;
+const PROVIDER_ARG = `glm | openrouter`;
 
 function resolveProvider(p: string | undefined, cfg: ConfigFile): ProviderId | undefined {
   if (p && isProviderId(p)) return p;
@@ -33,12 +33,8 @@ function printMissingClaudeBase(id: ProviderId): void {
   const meta = PROVIDERS[id];
   console.error(
     chalk.red(
-      `${meta.label}（${id}）未配置可用于 Claude Code 的 Anthropic 兼容 Base URL。\n` +
-        `该供应商默认仅为 OpenAI 兼容端点，Claude Code 需要 Anthropic Messages 兼容网关（例如 LiteLLM）。\n\n` +
-        `请任选其一：\n` +
-        `  1) 若已有网关：claude-helper set ${id} --anthropic-base <网关根URL>\n` +
-        `  2) 用 OpenAI 变量配置 LiteLLM 后再填 anthropic-base，详见 README「LiteLLM」一节\n` +
-        `内置可一键 apply 的供应商：glm、openrouter（无需额外 anthropic-base）。`,
+      `${meta.label}（${id}）当前无法解析 Claude Code 用的 Anthropic Base（配置异常或需覆盖）。\n` +
+        `可尝试：claude-helper set ${id} --anthropic-base <正确的 Anthropic 兼容根 URL>`,
     ),
   );
 }
@@ -335,7 +331,7 @@ const program = new Command();
 program
   .name('claude-helper')
   .description('Claude Helper：多供应商 API Key、网络检查与 Claude Code 配置')
-  .version('0.3.5');
+  .version('0.4.0');
 
 program
   .command('check')
