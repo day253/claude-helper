@@ -10,7 +10,7 @@
 
 配置文件：`~/.llm-providers/config.yaml`
 
-**0.4 起**仅支持带官方 Anthropic 端的 **glm / openrouter**；旧版 YAML 里其它供应商字段会在读取时**忽略**，若 `active_provider` 已失效会清空，请重新 `claude-helper` 向导或 `active`。
+**0.4.1 起**内置 **glm / minimax / openrouter**（均有官方文档给出的 **Anthropic 兼容** 根 URL，可直接 `claude apply`）。旧版 YAML 里其它供应商 id 会在读取时**忽略**；若 `active_provider` 已失效会清空，请重新 `claude-helper` 向导或 `active`。
 
 ## 安装
 
@@ -50,13 +50,14 @@ GitHub 旧仓库 URL 一般会重定向到新名一段时间。
 | `claude-helper claude apply [-p id]` | 将本次计算的 `ANTHROPIC_*` **合并进** `~/.claude/settings.json` 的 `env`；**写入前备份**为 `settings.json.bak.<时间戳>` |
 | `claude-helper --help` / `claude-helper claude --help` | 帮助 |
 
-`provider`：**仅** `glm` | `openrouter`（二者均有官方 **Anthropic 兼容** 端点，可直接 `claude apply`）。
+`provider`：`glm` | `minimax` | `openrouter`（均有官方 **Anthropic 兼容** 端点说明，可直接 `claude apply`）。
 
 ## 供应商与 Claude Code 一键 apply
 
 | 供应商 | 申请密钥提示 | OpenAI 默认 Base | Anthropic Base（`claude apply`） |
 |--------|----------------|------------------|----------------------------------|
 | **glm** | [一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper) 或开放平台 API Keys | `https://open.bigmodel.cn/api/paas/v4` | `https://open.bigmodel.cn/api/anthropic` |
+| **minimax** | [Claude Code 接入（MiniMax）](https://platform.minimax.io/docs/token-plan/claude-code) | `https://api.minimax.io/v1` | 国际默认 `https://api.minimax.io/anthropic`；**中国大陆**请 `set minimax --anthropic-base https://api.minimaxi.com/anthropic`。`apply` 会一并写入官方文档建议的模型别名与超时等 `env`（见 `providers.ts` 中 `claudeExtraEnv`） |
 | **openrouter** | OpenRouter → Keys | `https://openrouter.ai/api/v1` | `https://openrouter.ai/api`（`ANTHROPIC_AUTH_TOKEN` + 空的 `ANTHROPIC_API_KEY`） |
 
 高级：若需改用自建代理根地址，可用 `claude-helper set <id> --anthropic-base <URL>` 覆盖内置 Anthropic Base。
@@ -76,7 +77,7 @@ eval "$(claude-helper export -p openrouter)"
 
 ## 与 Claude Code 对接
 
-官方通过用户级 [`settings.json` 的 `env`](https://docs.anthropic.com/en/docs/claude-code/settings) 注入环境变量；本工具的 `claude apply` 会 **合并** `env`，并尽量清除与当前模式冲突的键（例如从 OpenRouter 切回智谱时会去掉多余的 `ANTHROPIC_AUTH_TOKEN`）。
+官方通过用户级 [`settings.json` 的 `env`](https://docs.anthropic.com/en/docs/claude-code/settings) 注入环境变量；本工具的 `claude apply` 会 **合并** `env`，并先删除「上一供应商可能留下的」键：各厂商在 `claudeExtraEnv` 里声明过的附加变量（如 MiniMax 的模型别名）、以及认证模式切换时需去掉的 `ANTHROPIC_AUTH_TOKEN` 等。
 
 ```bash
 claude-helper set glm --key YOUR_KEY
@@ -94,7 +95,7 @@ claude-helper claude apply
 |--|-------------------------|-------------------------|
 | 范围 | 装编码工具、套餐、MCP、Claude 插件市场等 | **仅** Key、检查、`export` / `claude apply` |
 | 启动 | `npx @z_ai/coding-helper` | `claude-helper`（无参即向导选一家） |
-| 供应商 | 以 GLM 编码套餐为中心 | **仅** 内置 Anthropic 端点的 **glm、openrouter** |
+| 供应商 | 以 GLM 编码套餐为中心 | 内置 Anthropic 端点的 **glm、minimax、openrouter** |
 | 配置落点 | 依官方向导 | `~/.llm-providers/config.yaml` + 可选 `~/.claude/settings.json` |
 
 ## 发布到 GitHub（例如账号或组织 `day253`）

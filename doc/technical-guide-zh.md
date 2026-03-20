@@ -34,7 +34,7 @@
 |------|----------|
 | 多供应商 Key 散落在各 shell 配置里 | 统一写入 `~/.llm-providers/config.yaml` |
 | 用户不知道去哪申请 Key | 交互前打印 `keyHelp` + 官方 `docs` 链接 |
-| Claude Code 需要 Anthropic 形态端点 | **仅收录**带官方 `claudeAnthropicBaseUrl` 的供应商（当前 glm、openrouter）；可用 `anthropic_base_url` 覆盖 |
+| Claude Code 需要 Anthropic 形态端点 | **仅收录**带官方文档/网关给出的 `claudeAnthropicBaseUrl` 的供应商（当前 glm、minimax、openrouter）；可用 `anthropic_base_url` 覆盖 |
 | 误覆盖用户 Claude 全局配置 | `claude apply` 仅合并 `env`，写入前备份 `settings.json.bak.<timestamp>` |
 
 ### 1.3 技术栈
@@ -178,9 +178,9 @@ flowchart TD
 
 ### 4.2 供应商目录策略
 
-Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无官方 Anthropic 根的渠道**不再列入** `PROVIDERS`，避免用户误以为可一键 `claude apply`。
+Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无官方 Anthropic 根或文档的渠道**不列入** `PROVIDERS`，避免用户误以为可一键 `claude apply`。
 
-**决策**：新供应商必须提供可用的 `claudeAnthropicBaseUrl` 才合并进主线；老配置里已删除的 id 在 `loadConfig` 时会被忽略。
+**决策**：新供应商须在厂商文档中核实可用的 Anthropic 兼容根 URL（如 [MiniMax · Claude Code](https://platform.minimax.io/docs/token-plan/claude-code)）；老配置里未知 id 在 `loadConfig` 时会被忽略。部分厂商还会在 `env` 中要求额外键（超时、模型别名等），通过 `ProviderMeta.claudeExtraEnv` 描述；`claude apply` 前会统一清除**所有**供应商在 `claudeExtraEnv` 中声明过的键名，再写入当前供应商的补丁，避免切换后残留。
 
 ### 4.3 settings.json 合并策略
 
@@ -201,7 +201,7 @@ Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无
 | 职责 | 说明 |
 |------|------|
 | `ProviderId` | 联合字面量类型，与 YAML 中 key 一致 |
-| `ProviderMeta` | `defaultBaseUrl`、`docs`、`keyHelp`、**必填** `claudeAnthropicBaseUrl`、`claudeUseAuthToken?` |
+| `ProviderMeta` | `defaultBaseUrl`、`docs`、`keyHelp`、**必填** `claudeAnthropicBaseUrl`、`claudeUseAuthToken?`、`claudeExtraEnv?`（厂商文档要求的附加 `ANTHROPIC_*` / 超时等） |
 | `PROVIDERS` | 单一数据源，扩展新供应商时只改此文件 |
 
 ### 5.2 `src/store.ts`
@@ -219,7 +219,7 @@ Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无
 | `effectiveOpenAIBase` | OpenAI 兼容 `export` 用 Base URL |
 | `effectiveClaudeBase` | 网关覆盖 vs 内置 Anthropic Base |
 | `buildClaudeEnv` | 生成待写入的 `ANTHROPIC_*` 键值 |
-| `claudeEnvKeysToRemove` | 切换认证模式时清理残留键 |
+| `claudeEnvKeysToRemove` | 合并前删除：全部 `claudeExtraEnv` 曾用过的键名、按需删 `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_MODEL` |
 | `mergeClaudeSettings` | 备份 + JSON 解析 + env 合并 + 写回 |
 
 ### 5.4 `src/validate.ts`
@@ -281,7 +281,17 @@ claude-helper active openrouter
 claude-helper claude apply
 ```
 
-### 7.3 故障排查
+### 7.3 典型流程：Claude Code + MiniMax
+
+```bash
+claude-helper set minimax --key <KEY>
+# 中国大陆用户：
+# claude-helper set minimax --key <KEY> --anthropic-base https://api.minimaxi.com/anthropic
+claude-helper active minimax
+claude-helper claude apply
+```
+
+### 7.4 故障排查
 
 | 现象 | 排查 |
 |------|------|
@@ -313,7 +323,7 @@ npm run debug -- list
 ### 8.2 新增供应商
 
 1. 在 `ProviderId` 与 `PROVIDERS` 中增加条目（须已核实 **Anthropic 兼容根 URL**）。
-2. 填写 `keyHelp`、`defaultBaseUrl`、`docs`、**必填** `claudeAnthropicBaseUrl`，按需 `claudeUseAuthToken`。
+2. 填写 `keyHelp`、`defaultBaseUrl`、`docs`、**必填** `claudeAnthropicBaseUrl`，按需 `claudeUseAuthToken`、`claudeExtraEnv`。
 3. 更新 `README.md` 供应商表与本文档相关章节。
 4. `npm run build` 通过后提交。
 
@@ -344,5 +354,6 @@ npm run debug -- list
 - [智谱 · 一键安装助手（GLM Coding Plan）](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper)（`@z_ai/coding-helper`；与本项目职责对比见 README）
 - [Claude Code settings](https://docs.anthropic.com/en/docs/claude-code/settings)
 - [OpenRouter × Claude Code](https://openrouter.ai/docs/guides/guides/coding-agents/claude-code-integration)
+- [MiniMax · Claude Code](https://platform.minimax.io/docs/token-plan/claude-code)
 - [Z.AI Coding Tool Helper（国际站说明）](https://docs.z.ai/devpack/extension/coding-tool-helper)
 - [openclaw-cursor-brain technical-guide-zh.md](https://github.com/andeya/openclaw-cursor-brain/blob/main/doc/technical-guide-zh.md)（文档结构参考）

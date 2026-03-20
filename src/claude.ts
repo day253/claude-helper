@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { PROVIDERS, type ProviderId } from './providers.js';
+import { PROVIDERS, PROVIDER_IDS, type ProviderId } from './providers.js';
 import type { ProviderEntry } from './store.js';
 
 const SETTINGS_SCHEMA = 'https://json.schemastore.org/claude-code-settings.json';
@@ -43,18 +43,32 @@ export function buildClaudeEnv(id: ProviderId, e: ProviderEntry): Record<string,
   } else {
     out.ANTHROPIC_API_KEY = key;
   }
+  if (meta.claudeExtraEnv) {
+    Object.assign(out, meta.claudeExtraEnv);
+  }
   const model = e.default_model?.trim();
   if (model) out.ANTHROPIC_MODEL = model;
   return out;
 }
 
+function collectClaudeExtraEnvKeysAcrossProviders(): string[] {
+  const keys = new Set<string>();
+  for (const id of PROVIDER_IDS) {
+    const ex = PROVIDERS[id].claudeExtraEnv;
+    if (ex) for (const k of Object.keys(ex)) keys.add(k);
+  }
+  return [...keys];
+}
+
 /** 写入 settings.json 时需删除的 env 键（避免与上一供应商冲突） */
 export function claudeEnvKeysToRemove(id: ProviderId, e: ProviderEntry): string[] {
   const meta = PROVIDERS[id];
-  const remove: string[] = [];
-  if (!meta.claudeUseAuthToken) remove.push('ANTHROPIC_AUTH_TOKEN');
-  if (!e.default_model?.trim()) remove.push('ANTHROPIC_MODEL');
-  return remove;
+  const remove = new Set<string>(collectClaudeExtraEnvKeysAcrossProviders());
+  if (!meta.claudeUseAuthToken) remove.add('ANTHROPIC_AUTH_TOKEN');
+  const willSetAnthropicModel =
+    Boolean(e.default_model?.trim()) || Boolean(meta.claudeExtraEnv?.ANTHROPIC_MODEL);
+  if (!willSetAnthropicModel) remove.add('ANTHROPIC_MODEL');
+  return [...remove];
 }
 
 export function mergeClaudeSettings(envPatch: Record<string, string>, removeKeys: string[]): void {

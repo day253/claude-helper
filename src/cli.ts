@@ -21,7 +21,7 @@ import {
   type ProviderEntry,
 } from './store.js';
 
-const PROVIDER_ARG = `glm | openrouter`;
+const PROVIDER_ARG = `glm | minimax | openrouter`;
 
 function resolveProvider(p: string | undefined, cfg: ConfigFile): ProviderId | undefined {
   if (p && isProviderId(p)) return p;
