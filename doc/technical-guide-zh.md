@@ -293,6 +293,15 @@ npx tsx src/cli.ts list
 npm run build
 ```
 
+断点调试（Node 在首行暂停，等待附加调试器）：
+
+```bash
+npm run debug -- list
+# 或带其它子命令：npm run debug -- claude export -p glm
+```
+
+在 Cursor / VS Code 使用「附加到 Node.js 进程」，或在 Chrome 打开 `chrome://inspect`。
+
 ### 8.2 新增供应商
 
 1. 在 `ProviderId` 与 `PROVIDERS` 中增加条目。

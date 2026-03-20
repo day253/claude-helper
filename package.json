@@ -9,6 +9,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/cli.ts",
+    "debug": "tsx --inspect-brk src/cli.ts",
     "prepare": "npm run build"
   },
   "engines": {

@@ -17,7 +17,10 @@ npm run build
 npm link   # 可选，全局可用 llm-config
 ```
 
-开发调试：`npx tsx src/cli.ts list`
+开发调试：
+
+- 直接跑：`npx tsx src/cli.ts list`
+- **断点调试**（会先暂停等待附加调试器）：`npm run debug -- list`，在 Cursor/VS Code 选「附加到 Node 进程」或使用 Chrome 打开 `chrome://inspect`
 
 ## 命令一览
 
