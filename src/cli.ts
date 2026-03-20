@@ -13,11 +13,13 @@ import {
   buildClaudeEnv,
   claudeEnvKeysToRemove,
   claudeSettingsPath,
+  compareClaudeSettingsEnvWithConfig,
   effectiveClaudeBase,
   effectiveOpenAIBase,
   mergeClaudeSettings,
 } from './claude.js';
-import { validateAfterSave } from './validate.js';
+import terminalLink from 'terminal-link';
+import { formatSettingsSyncSummary, validateAfterSave } from './validate.js';
 import {
   configPath,
   loadConfig,
@@ -33,6 +35,7 @@ import {
   printOperationHint,
   printSection,
   printWizardBanner,
+  printWizardHints,
   printWizardIntro,
   printWizardStatus,
   type WizardStatusSummary,
@@ -46,8 +49,26 @@ import {
   type WizardLang,
   wizardCopy,
 } from './wizard-locale.js';
-
 const PROVIDER_ARG = PROVIDER_IDS.join(' | ');
+
+/** 列表 prompt 前展示 💡 操作提示（对齐 coding-helper） */
+async function promptWithHints<T>(s: WizardCopy, questions: Parameters<typeof inquirer.prompt>[0]): Promise<T> {
+  printWizardHints(s);
+  return inquirer.prompt(questions) as Promise<T>;
+}
+
+function langChoiceLabel(code: WizardLang, marked: WizardLang, s: WizardCopy): string {
+  const label = code === 'zh' ? wizardCopy('zh').langZh : wizardCopy('en').langEn;
+  if (code === marked) return `${label}${chalk.green(` ✓ (${s.currentActiveParen})`)}`;
+  return label;
+}
+
+/** 无任何已保存 Key 且未设默认供应商时视为首次向导（短路径直进配置） */
+function isFirstRunWizard(cfg: ConfigFile): boolean {
+  const hasAnyKey = PROVIDER_IDS.some((id) => cfg.providers[id]?.api_key?.trim());
+  if (hasAnyKey) return false;
+  return cfg.active_provider == null;
+}
 
 function wizardLangFromCfg(cfg: ConfigFile): WizardLang {
   return cfg.wizard_lang ?? 'zh';
@@ -55,16 +76,17 @@ function wizardLangFromCfg(cfg: ConfigFile): WizardLang {
 
 /** 首次或未设置 wizard_lang 时选择并写入配置 */
 async function promptWizardLangAndSave(cfg: ConfigFile): Promise<ConfigFile> {
-  const hint = wizardCopy(inferWizardLangDefault());
-  const { lang } = await inquirer.prompt<{ lang: WizardLang }>([
+  const suggested = inferWizardLangDefault();
+  const hint = wizardCopy(suggested);
+  const { lang } = await promptWithHints<{ lang: WizardLang }>(hint, [
     {
       type: 'list',
       name: 'lang',
       message: hint.langPickTitle,
-      default: inferWizardLangDefault(),
+      default: suggested,
       choices: [
-        { name: `${wizardCopy('zh').langZh}`, value: 'zh' as const },
-        { name: `${wizardCopy('en').langEn}`, value: 'en' as const },
+        { name: langChoiceLabel('zh', suggested, hint), value: 'zh' as const },
+        { name: langChoiceLabel('en', suggested, hint), value: 'en' as const },
       ],
     },
   ]);
@@ -121,7 +143,7 @@ async function cmdShow(id: ProviderId): Promise<void> {
 
 /** 写入 Claude settings 前：用列表选择，↑↓ + Enter，避免输入 y/n */
 async function promptWriteSettingsConfirm(message: string, s: WizardCopy): Promise<boolean> {
-  const { ok } = await inquirer.prompt<{ ok: boolean }>([
+  const { ok } = await promptWithHints<{ ok: boolean }>(s, [
     {
       type: 'list',
       name: 'ok',
@@ -147,16 +169,30 @@ async function promptSet(
   if (options?.sectionTitle) printSection(options.sectionTitle);
   console.log(chalk.cyan.bold(meta.label));
   console.log(chalk.cyan(meta.keyHelp));
-  if (meta.docs) console.log(chalk.cyan(`${s.docsLabel} ${meta.docs}`));
-  const answers = await inquirer.prompt([
-    {
-      type: 'password',
-      name: 'api_key',
-      message: options?.sectionTitle ? s.pwdWizard : s.pwdPlain,
-      mask: '*',
-      default: cur.api_key ?? '',
-    },
-  ]);
+  if (meta.docs) {
+    const url = meta.docs;
+    const link = terminalLink(url, url, { fallback: (t: string) => t });
+    console.log(chalk.cyan(`${s.docsLabel} ${link}`));
+  }
+  const answers = await (options?.sectionTitle
+    ? promptWithHints(s, [
+        {
+          type: 'password',
+          name: 'api_key',
+          message: s.pwdWizard,
+          mask: '*',
+          default: cur.api_key ?? '',
+        },
+      ])
+    : inquirer.prompt([
+        {
+          type: 'password',
+          name: 'api_key',
+          message: s.pwdPlain,
+          mask: '*',
+          default: cur.api_key ?? '',
+        },
+      ]));
   const next: ProviderEntry = {
     ...cur,
     api_key: answers.api_key?.trim() ? answers.api_key.trim() : cur.api_key,
@@ -248,8 +284,8 @@ async function cmdActive(id: ProviderId | undefined): Promise<void> {
   await validateAfterSave(loadConfig());
 }
 
-async function cmdCheck(): Promise<void> {
-  await validateAfterSave(loadConfig());
+async function cmdCheck(opts?: { json?: boolean }): Promise<void> {
+  await validateAfterSave(loadConfig(), undefined, { json: opts?.json });
 }
 
 function cmdExport(provider: ProviderId | undefined, format: 'shell' | 'json'): void {
@@ -378,10 +414,13 @@ const INIT_DEFAULT_PROVIDER: ProviderId = 'glm';
 function wizardStatusFromCfg(cfg: ConfigFile, lang: WizardLang): WizardStatusSummary {
   const id = cfg.active_provider ?? null;
   const entry = id ? cfg.providers[id] : undefined;
+  const syncCmp = compareClaudeSettingsEnvWithConfig(cfg);
+  const settingsSync = formatSettingsSyncSummary(lang, syncCmp);
   return {
     activeId: id,
     activeLabel: id ? PROVIDERS[id].label : null,
     keyMasked: maskKeyWizard(entry?.api_key, lang),
+    settingsSync,
   };
 }
 
@@ -391,9 +430,8 @@ async function wizardConfigureFlow(): Promise<void> {
 
   printSection(s.sectionConfigure);
   console.log(chalk.dim(`${s.savePathPrefix}${configPath()}`));
-  printOperationHint(s);
 
-  const { provider } = await inquirer.prompt([
+  const { provider } = await promptWithHints<{ provider: ProviderId | '__back' }>(s, [
     {
       type: 'list',
       name: 'provider',
@@ -433,8 +471,7 @@ async function wizardConfigureFlow(): Promise<void> {
 
   for (;;) {
     printSection(s.sectionNext);
-    printOperationHint(s);
-    const { step } = await inquirer.prompt([
+    const { step } = await promptWithHints<{ step: 'apply' | 'hint' | 'menu' }>(s, [
       {
         type: 'list',
         name: 'step',
@@ -485,15 +522,22 @@ async function runSetupWizard(): Promise<void> {
     const lang = wizardLangFromCfg(cfg);
     const s = wizardCopy(lang);
 
+    if (isFirstRunWizard(cfg)) {
+      printSection(s.firstRunTitle);
+      console.log(chalk.dim(s.firstRunBody));
+      await wizardConfigureFlow();
+      continue;
+    }
+
     console.log();
     printWizardBanner(s);
     printWizardIntro(s);
     printWizardStatus(s, wizardStatusFromCfg(cfg, lang));
     printOperationHint(s);
 
-    const { action } = await inquirer.prompt<{
+    const { action } = await promptWithHints<{
       action: 'configure' | 'apply' | 'check' | 'language' | 'exit';
-    }>([
+    }>(s, [
       {
         type: 'list',
         name: 'action',
@@ -516,15 +560,15 @@ async function runSetupWizard(): Promise<void> {
     }
 
     if (action === 'language') {
-      const { lang: next } = await inquirer.prompt<{ lang: WizardLang }>([
+      const { lang: next } = await promptWithHints<{ lang: WizardLang }>(s, [
         {
           type: 'list',
           name: 'lang',
           message: s.promptChangeLang,
           default: lang,
           choices: [
-            { name: wizardCopy('zh').langZh, value: 'zh' as const },
-            { name: wizardCopy('en').langEn, value: 'en' as const },
+            { name: langChoiceLabel('zh', lang, s), value: 'zh' as const },
+            { name: langChoiceLabel('en', lang, s), value: 'en' as const },
           ],
         },
       ]);
@@ -536,7 +580,7 @@ async function runSetupWizard(): Promise<void> {
       printSection(s.sectionChecking);
       await validateAfterSave(loadConfig());
       printOperationHint(s);
-      const { afterCheck } = await inquirer.prompt<{ afterCheck: 'menu' | 'exit' }>([
+      const { afterCheck } = await promptWithHints<{ afterCheck: 'menu' | 'exit' }>(s, [
         {
           type: 'list',
           name: 'afterCheck',
@@ -573,7 +617,7 @@ async function runSetupWizard(): Promise<void> {
       console.log(chalk.green(sApply.applyOk));
       printClaudeDoneHint(sApply);
       printOperationHint(sApply);
-      const { afterApply } = await inquirer.prompt<{ afterApply: 'menu' | 'exit' }>([
+      const { afterApply } = await promptWithHints<{ afterApply: 'menu' | 'exit' }>(sApply, [
         {
           type: 'list',
           name: 'afterApply',
@@ -608,7 +652,14 @@ program
 program
   .command('check')
   .description('检查已保存的 Key / 默认供应商，并探测端点网络；提示如何启动 Claude Code')
-  .action(() => cmdCheck().catch(fatal));
+  .option('--json', '以 JSON 输出结果（便于脚本）', false)
+  .action((opts: { json: boolean }) => cmdCheck({ json: opts.json }).catch(fatal));
+
+program
+  .command('doctor')
+  .description('同 check：健康检查（兼容 chelper doctor 习惯）')
+  .option('--json', '以 JSON 输出结果（便于脚本）', false)
+  .action((opts: { json: boolean }) => cmdCheck({ json: opts.json }).catch(fatal));
 
 program
   .command('list')
@@ -740,6 +791,7 @@ function fatal(e: unknown): void {
 const argvRest = process.argv.slice(2);
 const topLevelCommands = new Set([
   'check',
+  'doctor',
   'list',
   'show',
   'set',

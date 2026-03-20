@@ -26,10 +26,25 @@ export function printWizardIntro(s: WizardCopy): void {
   console.log(s.introThisTool);
 }
 
+export type SettingsSyncVariant = 'green' | 'yellow' | 'red' | 'dim';
+
 export interface WizardStatusSummary {
   activeId: string | null;
   activeLabel: string | null;
   keyMasked: string;
+  /** 与 ~/.claude/settings.json 对齐摘要（主菜单展示） */
+  settingsSync?: { text: string; variant: SettingsSyncVariant };
+}
+
+/** 与 coding-helper 类似：列表操作前的单行提示 */
+export function printWizardHints(s: WizardCopy): void {
+  console.log(
+    chalk.gray('💡 ') +
+      chalk.gray(s.wizardHintNav) +
+      chalk.gray(' | ') +
+      chalk.gray(s.wizardHintConfirm) +
+      '\n',
+  );
 }
 
 export function printWizardStatus(s: WizardCopy, st: WizardStatusSummary): void {
@@ -42,6 +57,17 @@ export function printWizardStatus(s: WizardCopy, st: WizardStatusSummary): void 
     );
   }
   console.log(`  ${s.statusApiKey}${st.keyMasked}`);
+  if (st.settingsSync) {
+    const paint =
+      st.settingsSync.variant === 'green'
+        ? chalk.green
+        : st.settingsSync.variant === 'yellow'
+          ? chalk.yellow
+          : st.settingsSync.variant === 'red'
+            ? chalk.red
+            : chalk.dim;
+    console.log(`  ${s.statusSettingsSyncTitle}${paint(st.settingsSync.text)}`);
+  }
   console.log(chalk.dim(s.statusFootnote));
 }
 
@@ -77,7 +103,9 @@ export function printConfigSyncSummary(
 }
 
 export function printClaudeDoneHint(s: WizardCopy): void {
-  console.log(chalk.cyan.bold(s.doneTitle), chalk.dim(s.doneOpenTerminal));
-  console.log(`  ${chalk.bold('claude')}`, chalk.dim(s.doneRun));
+  console.log();
+  console.log(
+    chalk.cyan('❯ >  ') + chalk.cyan.bold(s.doneLaunchTitle) + chalk.dim(s.doneLaunchHint),
+  );
   console.log(chalk.dim(s.doneInstall));
 }

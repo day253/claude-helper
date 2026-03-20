@@ -1,3 +1,6 @@
 node_modules/
 dist/
 *.log
+.claude/
+# 本地 npm token，勿提交
+.npmrc

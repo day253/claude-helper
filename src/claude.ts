@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, copyFileSync } from
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { PROVIDERS, PROVIDER_IDS, type ProviderId } from './providers.js';
-import type { ProviderEntry } from './store.js';
+import type { ConfigFile, ProviderEntry } from './store.js';
 
 const SETTINGS_SCHEMA = 'https://json.schemastore.org/claude-code-settings.json';
 
@@ -102,4 +102,60 @@ export function mergeClaudeSettings(envPatch: Record<string, string>, removeKeys
   root.env = env;
 
   writeFileSync(path, `${JSON.stringify(root, null, 2)}\n`, 'utf-8');
+}
+
+export type ClaudeSettingsReadResult =
+  | { ok: true; env: Record<string, string> }
+  | { ok: false; reason: 'missing' | 'parse' };
+
+/** 只读 ~/.claude/settings.json 的 env（键值一律转为 string，便于与 buildClaudeEnv 对比） */
+export function readClaudeSettingsEnv(): ClaudeSettingsReadResult {
+  const path = claudeSettingsPath();
+  if (!existsSync(path)) return { ok: false, reason: 'missing' };
+  try {
+    const raw = readFileSync(path, 'utf-8');
+    const root = JSON.parse(raw) as Record<string, unknown>;
+    const envRaw =
+      typeof root.env === 'object' && root.env !== null && !Array.isArray(root.env)
+        ? (root.env as Record<string, unknown>)
+        : {};
+    const env: Record<string, string> = {};
+    for (const [k, v] of Object.entries(envRaw)) {
+      env[k] = v == null ? '' : String(v);
+    }
+    return { ok: true, env };
+  } catch {
+    return { ok: false, reason: 'parse' };
+  }
+}
+
+export type ClaudeSettingsEnvCompare =
+  | { kind: 'skipped' }
+  | { kind: 'no_file' }
+  | { kind: 'unreadable' }
+  | { kind: 'aligned' }
+  | { kind: 'drift'; keys: string[] };
+
+/**
+ * 将当前默认供应商应写入的 ANTHROPIC_* 与 settings.json env 对比（仅比较 buildClaudeEnv 产出的键）。
+ */
+export function compareClaudeSettingsEnvWithConfig(cfg: ConfigFile): ClaudeSettingsEnvCompare {
+  const active = cfg.active_provider;
+  const entry = active ? cfg.providers[active] : undefined;
+  if (!active || !entry?.api_key?.trim()) return { kind: 'skipped' };
+  if (!effectiveClaudeBase(active, entry)) return { kind: 'skipped' };
+  let expected: Record<string, string>;
+  try {
+    expected = buildClaudeEnv(active, entry);
+  } catch {
+    return { kind: 'skipped' };
+  }
+  const read = readClaudeSettingsEnv();
+  if (!read.ok) return read.reason === 'missing' ? { kind: 'no_file' } : { kind: 'unreadable' };
+  const drift: string[] = [];
+  for (const [k, want] of Object.entries(expected)) {
+    if ((read.env[k] ?? '') !== want) drift.push(k);
+  }
+  if (drift.length > 0) return { kind: 'drift', keys: drift };
+  return { kind: 'aligned' };
 }

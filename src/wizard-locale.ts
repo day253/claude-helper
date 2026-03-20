@@ -39,6 +39,15 @@ export type CheckCopy = {
   startApplyNote: string;
   startFixTpl: string;
   startReadme: string;
+  /** Claude Code settings.json 与本地默认供应商 env 对比 */
+  settingsSyncTitle: string;
+  settingsSyncAligned: string;
+  /** $KEYS */
+  settingsSyncDriftTpl: string;
+  settingsSyncNoFile: string;
+  settingsSyncUnreadable: string;
+  settingsSyncSkipped: string;
+  settingsSyncFootnote: string;
 };
 
 export type WizardCopy = {
@@ -59,7 +68,16 @@ export type WizardCopy = {
   statusSuggest: string;
   statusApiKey: string;
   statusFootnote: string;
+  /** 主菜单「当前配置」块内：settings 对齐摘要标题 */
+  statusSettingsSyncTitle: string;
   opHint: string;
+  /** 💡 行前：导航说明（与 wizardHintConfirm 用 | 拼接） */
+  wizardHintNav: string;
+  wizardHintConfirm: string;
+  /** 语言列表当前项后缀中的文案，形如 ✓ (当前生效) */
+  currentActiveParen: string;
+  firstRunTitle: string;
+  firstRunBody: string;
   warnClaudeGlobal1: string;
   warnClaudeGlobal2: string;
   syncLocalHeader: string;
@@ -68,9 +86,10 @@ export type WizardCopy = {
   syncClaudeHeader: string;
   syncAnthropicRoot: string;
   syncDone: string;
-  doneTitle: string;
-  doneOpenTerminal: string;
-  doneRun: string;
+  /** 「启动 Claude Code」加粗标题，接 doneLaunchHint（灰色说明） */
+  doneLaunchTitle: string;
+  /** 接在标题后，含破折号与括号说明；与 ❯ > 前缀组合成列表项风格 */
+  doneLaunchHint: string;
   doneInstall: string;
   docsLabel: string;
   menuPrompt: string;
@@ -136,7 +155,14 @@ const zh: WizardCopy = {
   statusSuggest: '（建议先执行「① 配置 API Key」）',
   statusApiKey: 'API Key：',
   statusFootnote: '  └ 未执行「同步」时，Claude Code 可能仍用旧 settings 或环境变量',
+  statusSettingsSyncTitle: '与 ~/.claude/settings.json：',
   opHint: '\n操作：↑↓ 移动高亮  ·  Enter 确认\n',
+  wizardHintNav: '↑↓ 移动高亮',
+  wizardHintConfirm: 'Enter 确认',
+  currentActiveParen: '当前生效',
+  firstRunTitle: '首次设置',
+  firstRunBody:
+    '下面只需两步：选一家供应商并粘贴 API Key（文档链接在下一步会显示）。完成后可随时回到主菜单做「同步」与「检查」。\n',
   warnClaudeGlobal1:
     '⚠️  注意：即将修改 Claude Code 的**用户级**配置（~/.claude/settings.json），**所有文件夹**里的 Claude 都会受影响。',
   warnClaudeGlobal2: '   已有文件会先自动备份为 settings.json.bak.<时间戳>\n',
@@ -147,9 +173,8 @@ const zh: WizardCopy = {
   syncAnthropicRoot: '   Anthropic 根：',
   syncDone:
     '\n✅ 已写入本地。若要让终端里的 claude 用上这家，请在下一步选「同步到 Claude Code」。',
-  doneTitle: '\n接下来在终端里',
-  doneOpenTerminal: '（建议在项目根目录新开一个终端）\n',
-  doneRun: '  ← 启动 Claude Code',
+  doneLaunchTitle: '启动 Claude Code',
+  doneLaunchHint: ' — （建议在您的工作空间新开终端，执行 claude 启动）',
   doneInstall: '  若提示未安装：npm install -g @anthropic-ai/claude-code\n',
   docsLabel: '文档:',
   menuPrompt: '你要做哪一步？',
@@ -157,13 +182,13 @@ const zh: WizardCopy = {
   menuApply: '>  ② 同步到 Claude Code — 写入全局 settings.json',
   menuCheck: '>  ③ 运行检查 — 网络与配置是否就绪',
   menuLanguage: '>  语言 / Language — 切换中英文引导',
-  menuExit: 'x  退出',
+  menuExit: 'x   退出',
   goodbyeLong: '\n再见。需要时可随时再运行：claude-helper 或 claude-helper init\n',
   goodbye: '\n再见。\n',
   sectionChecking: '正在检查',
   afterCheckPrompt: '检查结束，接下来？',
-  backMenu: '>  返回主菜单',
-  exitWizard: 'x  退出向导',
+  backMenu: '<-  返回主菜单',
+  exitWizard: 'x   退出向导',
   applyBlocked: '\n还不能同步：还没有「默认供应商」或没填 API Key。\n请先选上面的 ① 完成配置。\n',
   confirmWrite: '确认写入？（会合并 env，并备份原 settings.json）',
   confirmWriteShort: '确认写入？（合并 env，备份原 settings.json）',
@@ -175,15 +200,15 @@ const zh: WizardCopy = {
   sectionConfigure: '配置 API Key · 共 2 步',
   savePathPrefix: '保存位置：',
   step1Provider: '步骤 1/2：选择厂家（将自动设为「默认供应商」）',
-  backToMenu: '<  返回主菜单',
+  backToMenu: '<-  返回主菜单',
   step2Key: '步骤 2/2：填写 API Key',
   pwdWizard: '请粘贴 API Key（内容会被隐藏；留空并回车 = 保留原密钥）',
   pwdPlain: 'API Key（回车保留原值）',
   sectionNext: '这段做完了，接下来？',
   choosePrompt: '请选择',
   nextSync: '>  同步到 Claude Code — 写入 ~/.claude/settings.json（推荐）',
-  nextHint: '>  查看如何在终端里启动 claude',
-  nextBackMenu: '<  返回主菜单',
+  nextHint: '>  启动 Claude Code — （工作空间新开终端，执行 claude）',
+  nextBackMenu: '<-  返回主菜单',
   applyOkLong: '\n✅ 已与 Claude Code 对齐，终端里执行 claude 即可使用当前厂家。',
   errorMissingBase: '）当前无法解析 Claude Code 用的 Anthropic Base（配置异常或需覆盖）。',
   errorMissingBaseHint: '可尝试：claude-helper set ',
@@ -216,6 +241,14 @@ const zh: WizardCopy = {
     startFixTpl:
       '无法组合 Claude 环境变量。请检查 Key 与 Base，或尝试：\n   claude-helper set $ID --anthropic-base <Anthropic base URL>\n   claude-helper claude apply\n',
     startReadme: '   详见 README 与 doc/technical-guide-zh.md\n',
+    settingsSyncTitle: '\n── Claude Code settings.json ──',
+    settingsSyncAligned: '✓ ~/.claude/settings.json 中的 ANTHROPIC_* 与当前默认供应商一致（已同步）。',
+    settingsSyncDriftTpl:
+      '⚠ ~/.claude/settings.json 与当前默认供应商不一致，差异键：$KEYS。可执行：claude-helper claude apply',
+    settingsSyncNoFile: '○ 尚未找到 ~/.claude/settings.json（未同步过）。可执行：claude-helper claude apply',
+    settingsSyncUnreadable: '✗ 无法读取或解析 ~/.claude/settings.json，请手动检查 JSON。',
+    settingsSyncSkipped: '○ 无默认供应商或缺少 Key / Anthropic Base，跳过与 settings.json 的对比。',
+    settingsSyncFootnote: '   （若你手动改过 settings，也可能显示不一致；以 claude-helper 计算的 env 为准。）\n',
   },
 };
 
@@ -238,7 +271,14 @@ const en: WizardCopy = {
   statusSuggest: '(complete step ① first)',
   statusApiKey: 'API Key: ',
   statusFootnote: '  └ Until you sync, Claude Code may still use old settings or env vars',
+  statusSettingsSyncTitle: 'vs ~/.claude/settings.json: ',
   opHint: '\nTip: ↑↓ to move  ·  Enter to confirm\n',
+  wizardHintNav: '↑↓ to move',
+  wizardHintConfirm: 'Enter to confirm',
+  currentActiveParen: 'active',
+  firstRunTitle: 'First-time setup',
+  firstRunBody:
+    'Two steps: pick a provider and paste your API Key (doc link appears on the next screen). You can return to the main menu anytime for sync and checks.\n',
   warnClaudeGlobal1:
     '⚠️  You are about to change **user-level** Claude Code config (~/.claude/settings.json). All workspaces are affected.',
   warnClaudeGlobal2: '   An existing file will be backed up as settings.json.bak.<timestamp>\n',
@@ -249,9 +289,8 @@ const en: WizardCopy = {
   syncAnthropicRoot: '   Anthropic base: ',
   syncDone:
     '\n✅ Saved locally. To use this provider in the terminal, choose “Sync to Claude Code” next.',
-  doneTitle: '\nIn your terminal',
-  doneOpenTerminal: '(open a new terminal in your project root if possible)\n',
-  doneRun: '  ← start Claude Code',
+  doneLaunchTitle: 'Start Claude Code',
+  doneLaunchHint: ' — (open a new terminal in your workspace, run claude)',
   doneInstall: '  Not installed? npm install -g @anthropic-ai/claude-code\n',
   docsLabel: 'Docs:',
   menuPrompt: 'What would you like to do?',
@@ -259,13 +298,13 @@ const en: WizardCopy = {
   menuApply: '>  ② Sync to Claude Code — write global settings.json',
   menuCheck: '>  ③ Run checks — network & config readiness',
   menuLanguage: '>  Language — switch Chinese / English UI',
-  menuExit: 'x  Exit',
+  menuExit: 'x   Exit',
   goodbyeLong: '\nBye. Run claude-helper or claude-helper init anytime.\n',
   goodbye: '\nBye.\n',
   sectionChecking: 'Running checks',
   afterCheckPrompt: 'Checks done. What next?',
-  backMenu: '>  Back to main menu',
-  exitWizard: 'x  Exit wizard',
+  backMenu: '<-  Back to main menu',
+  exitWizard: 'x   Exit wizard',
   applyBlocked:
     '\nCannot sync yet: no default provider or missing API Key.\nComplete step ① first.\n',
   confirmWrite: 'Write merged env to Claude Code config? (backs up existing settings.json)',
@@ -278,15 +317,15 @@ const en: WizardCopy = {
   sectionConfigure: 'Configure API Key · 2 steps',
   savePathPrefix: 'Saved to: ',
   step1Provider: 'Step 1/2: Choose provider (becomes default)',
-  backToMenu: '<  Back to main menu',
+  backToMenu: '<-  Back to main menu',
   step2Key: 'Step 2/2: API Key',
   pwdWizard: 'Paste API Key (hidden; leave empty + Enter to keep current)',
   pwdPlain: 'API Key (Enter to keep)',
   sectionNext: 'Done with this part. Next?',
   choosePrompt: 'Choose',
   nextSync: '>  Sync to Claude Code — write ~/.claude/settings.json (recommended)',
-  nextHint: '>  How to start claude in the terminal',
-  nextBackMenu: '<  Back to main menu',
+  nextHint: '>  Start Claude Code — (new terminal in workspace, run claude)',
+  nextBackMenu: '<-  Back to main menu',
   applyOkLong: '\n✅ Synced. Run claude in the terminal to use this provider.',
   errorMissingBase: ') cannot resolve Anthropic base for Claude Code. Fix config or override.',
   errorMissingBaseHint: 'Try: claude-helper set ',
@@ -318,6 +357,14 @@ const en: WizardCopy = {
     startFixTpl:
       'Cannot build Claude env. Check key/base or try:\n   claude-helper set $ID --anthropic-base <URL>\n   claude-helper claude apply\n',
     startReadme: '   See README and doc/technical-guide-zh.md\n',
+    settingsSyncTitle: '\n── Claude Code settings.json ──',
+    settingsSyncAligned: '✓ ANTHROPIC_* in ~/.claude/settings.json matches the current default provider.',
+    settingsSyncDriftTpl:
+      '⚠ ~/.claude/settings.json differs from the current default provider. Keys: $KEYS. Run: claude-helper claude apply',
+    settingsSyncNoFile: '○ ~/.claude/settings.json not found yet. Run: claude-helper claude apply',
+    settingsSyncUnreadable: '✗ Could not read or parse ~/.claude/settings.json.',
+    settingsSyncSkipped: '○ Skipping settings compare (no default provider or missing key / Anthropic base).',
+    settingsSyncFootnote: '   (Manual edits to settings may also show as drift; claude-helper env is the reference.)\n',
   },
 };
 

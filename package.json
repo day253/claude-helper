@@ -1,10 +1,25 @@
 {
   "name": "claude-helper",
-  "version": "0.6.2",
+  "version": "0.6.4",
   "description": "Claude Helper：多供应商 API Key 向导、检查与写入 Claude Code settings.json",
+  "license": "MIT",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "anthropic",
+    "api-key",
+    "llm",
+    "cli",
+    "settings-json"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/day253/claude-helper.git"
+    "url": "git+https://github.com/day253/claude-helper.git"
   },
   "bugs": {
     "url": "https://github.com/day253/claude-helper/issues"
@@ -18,7 +33,7 @@
     "build": "tsc",
     "dev": "tsx src/cli.ts",
     "debug": "tsx --inspect-brk src/cli.ts",
-    "prepare": "npm run build"
+    "prepublishOnly": "npm run build"
   },
   "engines": {
     "node": ">=18"
@@ -27,7 +42,8 @@
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
     "inquirer": "^9.2.12",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "terminal-link": "^5.0.0"
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.7",

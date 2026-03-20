@@ -2,7 +2,7 @@
 
 > 本文档面向技术分享与维护，侧重架构、数据流与实现细节。适用于代码评审、新贡献者上手或与 [openclaw-cursor-brain 技术文档](https://github.com/andeya/openclaw-cursor-brain/blob/main/doc/technical-guide-zh.md) 同级的内部对齐。
 
-**厂商官方文档索引**（MiniMax、智谱一键助手、Kimi、火山、OpenRouter、Z.AI 等）：[vendor-docs-zh.md](./vendor-docs-zh.md)。
+**使用指南**（安装与日常命令）：仓库根目录 [README.md](../README.md)。**项目说明**（定位、迁移、发布）：[overview-zh.md](./overview-zh.md)。**厂商官方文档索引**：[vendor-docs-zh.md](./vendor-docs-zh.md)。
 
 ---
 
@@ -56,8 +56,9 @@
 claude-helper/   # 仓库目录名可与包名不同
 ├── package.json
 ├── tsconfig.json
-├── README.md                 # 用户向快速上手
+├── README.md                 # 使用指南（安装、常用流程、命令速查）
 ├── doc/
+│   ├── overview-zh.md        # 项目说明、与官方助手差异、开发/发布/GitHub
 │   ├── technical-guide-zh.md # 本文档
 │   └── vendor-docs-zh.md     # 厂商官方文档索引（Claude Code / 套餐）
 ├── src/
@@ -227,13 +228,17 @@ Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无
 | `buildClaudeEnv` | 生成待写入的 `ANTHROPIC_*` 键值 |
 | `claudeEnvKeysToRemove` | 合并前删除：全部 `claudeExtraEnv` 曾用过的键名、按需删 `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_MODEL` |
 | `mergeClaudeSettings` | 备份 + JSON 解析 + env 合并 + 写回 |
+| `readClaudeSettingsEnv` | 只读 `settings.json` 的 `env`，键值规范为 string |
+| `compareClaudeSettingsEnvWithConfig` | 将 `buildClaudeEnv(active, entry)` 与磁盘 `env` 按键对比：`aligned` / `drift` / `no_file` / `unreadable` / `skipped` |
 
 ### 5.4 `src/validate.ts`
 
 | 导出 | 说明 |
 |------|------|
 | `probeUrl` | `fetch` + 超时，用于判断 API 根路径是否可达（不校验厂商鉴权） |
-| `validateAfterSave` | `init` / `set` / `active` 保存后及 `check` 命令：列出已填 Key、**仅**对默认供应商的 **Anthropic 兼容根** 做 HTTP 探测（OpenAI export Base 不探测）、`buildClaudeEnv` 试组装，并打印启动 Claude Code 的步骤；文案语言默认取 `cfg.wizard_lang`，可选第二参数覆盖 |
+| `validateAfterSave` | 汇总诊断后输出：已填 Key、默认供应商、Anthropic 根探测、`buildClaudeEnv` 结果、**settings 对齐块**、启动步骤；第三参数 `{ json: true }` 时输出 `CheckReportJson` 并跳过人读文案 |
+| `formatSettingsSyncSummary` | 供主菜单 `printWizardStatus` 一行摘要（颜色 variant + 纯文本） |
+| `CheckReportJson` | `check --json` / `doctor --json` 的结构化字段 |
 
 ### 5.4.1 `src/wizard-locale.ts`
 
@@ -245,8 +250,8 @@ Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无
 
 ### 5.5 `src/cli.ts`
 
-- 使用 Commander 注册：`list`、`show`、`set`、`unset`、`active`、`export`、`check`、`init`、`claude export`、`claude apply`。
-- 无参 / `init`：`runSetupWizard()` **循环主菜单**（参考 `@z_ai/coding-helper`：**先说明能做什么**、**再展示当前配置**、**再给出编号选项**）；若配置中尚无 `wizard_lang`，**先选引导语言**并写入 YAML；主菜单含 **语言切换**；检查 / 同步后使用 **列表** 选择返回或退出；写入 `settings.json` 前 **Warning + 列表二选一**（↑↓ + Enter，无需输入 y/n）。
+- 使用 Commander 注册：`list`、`show`、`set`、`unset`、`active`、`export`、`check`（`--json`）、`doctor`（同 check）、`init`、`claude export`、`claude apply`。
+- 无参 / `init`：`runSetupWizard()`；**无任意 Key 且无默认供应商**时走 **首次短路径**（`firstRunTitle` 文案 + 直进 `wizardConfigureFlow`）；否则 **主菜单**。若尚无 `wizard_lang`，先选语言并写入 YAML。`promptWithHints`：每个列表题前 **`printWizardHints`（💡）**；语言列表标 **当前项 ✓**；返回/退出项 **`<-` / `x   `** 前缀。主菜单 **当前配置** 含 **settings.json 对齐摘要**。`promptSet` 中厂商 `docs` 使用 **`terminal-link`**（支持终端可点 URL）。写入 `settings.json` 前 **Warning + 列表二选一**。
 - `resolveProvider`：`--provider` / `-p` 优先，否则 `active_provider`。
 - `fatal`：统一 `process.exit(1)`。
 - `version.ts`：从 `package.json` 读取版本供 `commander -V` 使用。
@@ -258,10 +263,11 @@ Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无
 | `printWizardBanner` | 顶部双线框标题（文案来自 `WizardCopy`） |
 | `printWizardIntro` | 开场：本向导做什么 vs 官方 `coding-helper` |
 | `printWizardStatus` | 主菜单前「当前配置」（默认厂家、Key 脱敏） |
-| `printOperationHint` | 统一 ↑↓ / Enter 说明，避免每屏重复 |
+| `printOperationHint` | 主菜单等大段说明前的 ↑↓ / Enter |
+| `printWizardHints` | 列表题前的 💡 单行（`wizardHintNav` \| `wizardHintConfirm`） |
 | `printClaudeGlobalWarning` | 写入 `settings.json` 前的简短警告 |
 | `printConfigSyncSummary` | 两步保存后的本地 / Claude 侧摘要 |
-| `printClaudeDoneHint` | 同步后如何执行 `claude` |
+| `printClaudeDoneHint` | 同步后提示：`❯ >` 列表风格一行（启动 Claude Code + 工作空间新开终端说明） |
 
 ---
 
@@ -292,6 +298,8 @@ npm link   # 可选：全局 claude-helper
 ---
 
 ## 第 7 章：使用指南
+
+> 面向终端用户的安装与命令速查以根目录 **[README.md](../README.md)** 为准；本章保留典型流程与故障排查，便于与架构说明对照。
 
 ### 7.1 典型流程：Claude Code + 智谱
 
@@ -373,7 +381,7 @@ npm run debug -- list
 
 1. 在 `ProviderId` 与 `PROVIDERS` 中增加条目（须已核实 **Anthropic 兼容根 URL**）。
 2. 填写 `keyHelp`、`defaultBaseUrl`、`docs`、**必填** `claudeAnthropicBaseUrl`，按需 `claudeUseAuthToken`、`claudeExtraEnv`。
-3. 更新 `README.md` 供应商表与本文档相关章节。
+3. 更新 [overview-zh.md](./overview-zh.md) 中的供应商示例表（若有）与本文档相关章节；若新 id 需在面向用户的速查中体现，可同步根目录 [README.md](../README.md)。
 4. `npm run build` 通过后提交。
 
 ### 8.3 设计原则（与 openclaw 文档对齐的表述）
