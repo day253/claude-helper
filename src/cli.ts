@@ -299,117 +299,23 @@ function shellQuote(s: string): string {
   return `'${s.replace(/'/g, `'\\''`)}'`;
 }
 
-/** 对 Claude Code 可不经 LiteLLM 直接 apply 的供应商（与 providers 元数据一致） */
-const CLAUDE_READY_IDS: ProviderId[] = PROVIDER_IDS.filter(
-  (id) => Boolean(PROVIDERS[id].claudeAnthropicBaseUrl),
-);
+/** init 固定配置的供应商：智谱 GLM，Claude Code 可不经网关直接 apply */
+const INIT_PROVIDER: ProviderId = 'glm';
 
 async function cmdInit(): Promise<void> {
   console.log(chalk.dim(`配置将写入: ${configPath()}\n`));
   console.log(
-    chalk.cyan('新手模式：下面每一步都可以直接按「回车」选默认；不必像高手工具那样记命令。\n'),
+    chalk.cyan('只做一件事：配置 ') +
+      chalk.cyan.bold(PROVIDERS[INIT_PROVIDER].label) +
+      chalk.cyan(' 的 API Key，并设为默认供应商。\n') +
+      chalk.cyan('换用 OpenRouter、Kimi 等请用：claude-helper set <供应商id> 与 claude-helper active <id>\n'),
   );
 
-  const { preset } = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'preset',
-      message: '第一步：要选多少家？（回车 = 只配一家，最适合新手）',
-      default: 'single',
-      choices: [
-        {
-          name: '推荐：只配置一家（下一步选哪家，填一个 Key 即可）',
-          value: 'single' as const,
-        },
-        {
-          name: `全部过一遍（${PROVIDER_IDS.length} 家），没有的 Key 可回车跳过`,
-          value: 'all' as const,
-        },
-        {
-          name: `两家：Claude Code 能一键写入的（${CLAUDE_READY_IDS.map((i) => PROVIDERS[i].label).join('、')}）`,
-          value: 'claude_ready' as const,
-        },
-        {
-          name: '自定义：手动勾选（空格选中，回车确认）',
-          value: 'custom' as const,
-        },
-      ],
-    },
-  ]);
-
-  let which: ProviderId[];
-  if (preset === 'single') {
-    const defaultSingle: ProviderId = 'glm';
-    const { one } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'one',
-        message: '选哪一家？（回车默认智谱 GLM，对 Claude Code 最省事）',
-        default: defaultSingle,
-        choices: PROVIDER_IDS.map((id) => ({
-          name: `${PROVIDERS[id].label} (${id})`,
-          value: id,
-        })),
-      },
-    ]);
-    which = [one as ProviderId];
-  } else if (preset === 'all') {
-    which = [...PROVIDER_IDS];
-  } else if (preset === 'claude_ready') {
-    which = [...CLAUDE_READY_IDS];
-  } else {
-    const { picked } = await inquirer.prompt([
-      {
-        type: 'checkbox',
-        name: 'picked',
-        message: '请勾选供应商（空格切换选中，回车确认）：',
-        choices: PROVIDER_IDS.map((id) => ({
-          name: `${PROVIDERS[id].label} (${id})`,
-          value: id,
-        })),
-      },
-    ]);
-    which = picked as ProviderId[];
-  }
-
-  if (!which.length) {
-    console.log(chalk.yellow('未选择任何项'));
-    return;
-  }
   let cfg = loadConfig();
-  console.log(
-    chalk.dim(
-      which.length === 1
-        ? '\n请输入该供应商的 API Key。\n'
-        : '\n接下来逐个询问 API Key；不需要的供应商在密码行直接回车跳过即可。\n',
-    ),
-  );
-  for (const id of which) {
-    cfg = await promptSet(id, cfg);
-  }
-
-  let active: ProviderId;
-  if (which.length === 1) {
-    active = which[0];
-    console.log(chalk.dim(`\n默认供应商已设为：${PROVIDERS[active].label}（仅配置一家时无需再选）`));
-  } else {
-    const ans = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'active',
-        message: '默认供应商（export / claude 省略 -p 时用，回车 = 第一项）',
-        default: which[0],
-        choices: which.map((id) => ({
-          name: PROVIDERS[id].label,
-          value: id,
-        })),
-      },
-    ]);
-    active = ans.active as ProviderId;
-  }
-  cfg = { ...cfg, active_provider: active };
+  cfg = await promptSet(INIT_PROVIDER, cfg);
+  cfg = { ...cfg, active_provider: INIT_PROVIDER };
   saveConfig(cfg);
-  console.log(chalk.green('\n初始化完成。查看: claude-helper list'));
+  console.log(chalk.green(`\n已设为默认供应商：${PROVIDERS[INIT_PROVIDER].label}。查看：claude-helper list`));
   await validateAfterSave(loadConfig());
 }
 
@@ -417,7 +323,7 @@ const program = new Command();
 program
   .name('claude-helper')
   .description('Claude Helper：多供应商 API Key、网络检查与 Claude Code 配置')
-  .version('0.3.1');
+  .version('0.3.2');
 
 program
   .command('check')
@@ -543,7 +449,7 @@ claudeCmd
 
 program
   .command('init')
-  .description('新手向导：第一步回车选推荐范围，再逐项填 Key（可跳过）')
+  .description('新手：只配智谱 GLM 一家 Key 并设为默认（无选项）')
   .action(() => cmdInit().catch(fatal));
 
 function fatal(e: unknown): void {

@@ -36,7 +36,7 @@ GitHub 旧仓库 URL 一般会重定向到新名一段时间。
 
 | 命令 | 说明 |
 |------|------|
-| `claude-helper init` | 新手向导：**第一步直接回车**即「只配置一家」；第二步默认智谱 GLM（可改）；仅一家时自动设为默认供应商；**结束后自动检查并提示启动 Claude** |
+| `claude-helper init` | 新手：**无选择**，只引导填写 **智谱 GLM** 一家 Key 并设为默认；其他家用 `set` / `active`；**结束后自动检查并提示启动 Claude** |
 | `claude-helper check` | 随时复查：已保存 Key、默认供应商、端点 HTTP 探测；并打印 **启动 Claude Code** 的步骤（与 init/set/active 保存后自动执行的内容相同） |
 | `claude-helper list` | 列出全部（含 OpenAI base / Claude base、密钥脱敏） |
 | `claude-helper show <provider>` | 查看单个 |

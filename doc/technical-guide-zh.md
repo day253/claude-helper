@@ -114,7 +114,7 @@ flowchart TB
 
 ### 3.1 配置写入（init / set）
 
-`init` 第一步为 **list**：默认 **只配置一家**（回车即可）；第二步 **list** 选具体供应商（默认智谱 `glm`）。仅配一家时跳过「默认供应商」提问并自动 `active`。另可选全部过一遍、两家 Claude-ready、或自定义 checkbox。
+`init` **无任何列表选择**：固定为智谱 **glm** 一家，仅 `promptSet` 询问 API Key，并自动 `active_provider = glm`。其他供应商用 `set` / `active`。
 
 ```mermaid
 sequenceDiagram
