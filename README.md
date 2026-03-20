@@ -10,7 +10,7 @@
 
 配置文件：`~/.llm-providers/config.yaml`
 
-**0.5.0 起**内置 **glm、minimax、moonshot、openrouter、volcengine、zai**（均在厂商文档中给出可对接 Claude Code 的 **Anthropic 兼容** 根 URL；`claude apply` 前请对照各文档核对密钥与套餐）。**破坏性**：`glm` 的 Claude 侧与智谱文档对齐为 **`ANTHROPIC_AUTH_TOKEN`**（不再写入 `ANTHROPIC_API_KEY`）；若你曾依赖旧行为，请重新 `claude apply`。未知供应商 id 会在读取 YAML 时**忽略**；无效 `active_provider` 会清空。
+**0.6.0 起**内置 **14 家**供应商（均有厂商文档给出的 **Anthropic 兼容** Claude Code 根 URL）：`byteplus`、`dashscope`、`dashscope_intl`、`deepseek`、`fireworks`、`glm`、`minimax`、`modelstudio_intl`、`moonshot`、`novita`、`openrouter`、`siliconflow`、`volcengine`、`zai`。完整链接与套餐说明见 [doc/vendor-docs-zh.md](doc/vendor-docs-zh.md)；`claude apply` 前请对照文档核对 **Coding Plan / 按量 / 区域**（阿里云国内与国际拆成多个 id，勿混用）。未知 id 会在读取 YAML 时忽略；无效 `active_provider` 会清空。
 
 ## 安装
 
@@ -54,16 +54,14 @@ GitHub 旧仓库 URL 一般会重定向到新名一段时间。
 
 ## 供应商与 Claude Code 一键 apply
 
-| 供应商 | 申请密钥提示 | OpenAI 默认 Base | Anthropic Base（`claude apply`） |
-|--------|----------------|------------------|----------------------------------|
-| **glm** | [一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper#) · [Claude Code](https://docs.bigmodel.cn/cn/coding-plan/tool/claude) | `https://open.bigmodel.cn/api/paas/v4` | `https://open.bigmodel.cn/api/anthropic`（`ANTHROPIC_AUTH_TOKEN` + 文档建议的超时等，见 `claudeExtraEnv`） |
-| **zai** | [Z.AI · Claude Code](https://docs.z.ai/scenario-example/develop-tools/claude) | `https://api.z.ai/api/paas/v4`（编码套餐常用 `.../coding/paas/v4`，可 `--base`） | `https://api.z.ai/api/anthropic` |
-| **minimax** | [MiniMax · Claude Code](https://platform.minimax.io/docs/token-plan/claude-code) | `https://api.minimax.io/v1` | 国际 `https://api.minimax.io/anthropic`；国内 `https://api.minimaxi.com/anthropic`（`--anthropic-base`） |
-| **moonshot** | [Kimi · 编程工具 / Claude Code](https://platform.moonshot.ai/docs/guide/agent-support) | `https://api.moonshot.ai/v1` | 默认 `https://api.moonshot.ai/anthropic`；国内可 `--anthropic-base https://api.moonshot.cn/anthropic` |
-| **openrouter** | [Claude Code 集成](https://openrouter.ai/docs/guides/guides/coding-agents/claude-code-integration) | `https://openrouter.ai/api/v1` | `https://openrouter.ai/api` |
-| **volcengine** | [火山方舟 · Claude Code](https://www.volcengine.com/docs/82379/1928262) | `https://ark.cn-beijing.volces.com/api/v3` | 默认 `https://ark.cn-beijing.volces.com/api/coding`（以控制台与文档为准） |
+下表仅举例；**全部内置 id、官方文档与默认 Base** 见 [doc/vendor-docs-zh.md](doc/vendor-docs-zh.md) 与 `src/providers.ts`。
 
-完整链接表与维护说明：[doc/vendor-docs-zh.md](doc/vendor-docs-zh.md)。
+| 供应商 | 文档入口 | 备注 |
+|--------|-----------|------|
+| **glm** | [智谱 Claude Code](https://docs.bigmodel.cn/cn/coding-plan/tool/claude) | `ANTHROPIC_AUTH_TOKEN`；向导默认首项 |
+| **dashscope** / **dashscope_intl** / **modelstudio_intl** | [国内 Coding Plan](https://help.aliyun.com/zh/model-studio/claude-code-coding-plan) · [国际 Coding Plan](https://www.alibabacloud.com/help/en/model-studio/claude-code-coding-plan) · [国际按量](https://www.alibabacloud.com/help/doc-detail/2949529.html) | 三者密钥与 Base **不同**，请按控制台套餐选择 id |
+| **deepseek** / **fireworks** / **siliconflow** / **novita** | [DeepSeek Anthropic](https://api-docs.deepseek.com/guides/anthropic_api) · [Fireworks](https://docs.fireworks.ai/ecosystem/integrations/claude-code) · [SiliconFlow](https://docs.siliconflow.com/cn/usercases/use-siliconcloud-in-ClaudeCode) · [Novita](https://novita.ai/docs/guides/claude-code) | Fireworks/SiliconFlow 文档为 **`ANTHROPIC_API_KEY`**；SiliconFlow **必须** `--model` |
+| **minimax** / **moonshot** / **openrouter** / **volcengine** / **zai** / **byteplus** | 见 [vendor-docs-zh.md](doc/vendor-docs-zh.md) | 区域或路径以官方为准，可用 `--anthropic-base` 覆盖 |
 
 高级：若需改用自建代理根地址，可用 `claude-helper set <id> --anthropic-base <URL>` 覆盖内置 Anthropic Base。
 

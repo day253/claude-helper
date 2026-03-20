@@ -1,8 +1,16 @@
 export type ProviderId =
+  | 'byteplus'
+  | 'dashscope'
+  | 'dashscope_intl'
+  | 'deepseek'
+  | 'fireworks'
   | 'glm'
   | 'minimax'
+  | 'modelstudio_intl'
   | 'moonshot'
+  | 'novita'
   | 'openrouter'
+  | 'siliconflow'
   | 'volcengine'
   | 'zai';
 
@@ -24,6 +32,79 @@ export interface ProviderMeta {
 }
 
 export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
+  byteplus: {
+    id: 'byteplus',
+    label: 'BytePlus ModelArk（国际）',
+    defaultBaseUrl: 'https://ark.ap-southeast.bytepluses.com/api/coding/v3',
+    docs: 'https://docs.byteplus.com/en/docs/modelark/1928262',
+    keyHelp:
+      'BytePlus Ark API Key；须订阅 ModelArk **Coding Plan**。Anthropic 根默认新加坡区 `/api/coding`；模型名以文档为准，可用 --model 覆盖为具体模型 ID。',
+    claudeAnthropicBaseUrl: 'https://ark.ap-southeast.bytepluses.com/api/coding',
+    claudeUseAuthToken: true,
+    claudeExtraEnv: {
+      ANTHROPIC_MODEL: 'ark-code-latest',
+    },
+  },
+  dashscope: {
+    id: 'dashscope',
+    label: '阿里云百炼 Coding Plan（国内）',
+    defaultBaseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    docs: 'https://help.aliyun.com/zh/model-studio/claude-code-coding-plan',
+    keyHelp:
+      '国内 **Coding Plan** 专属 Key 与模型列表见文档。Anthropic 根默认 `coding.dashscope.aliyuncs.com/apps/anthropic`。国际站 Coding Plan 请用供应商 **dashscope_intl**；新加坡按量请用 **modelstudio_intl**。',
+    claudeAnthropicBaseUrl: 'https://coding.dashscope.aliyuncs.com/apps/anthropic',
+    claudeUseAuthToken: true,
+    claudeExtraEnv: {
+      ANTHROPIC_MODEL: 'qwen3.5-plus',
+    },
+  },
+  dashscope_intl: {
+    id: 'dashscope_intl',
+    label: '阿里云 Model Studio Coding Plan（国际）',
+    defaultBaseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+    docs: 'https://www.alibabacloud.com/help/en/model-studio/claude-code-coding-plan',
+    keyHelp:
+      '仅适用于 **国际站 Coding Plan**（新加坡区 Key）。Anthropic 根默认 `coding-intl.dashscope.aliyuncs.com/apps/anthropic`。国内用户请用 **dashscope**。',
+    claudeAnthropicBaseUrl: 'https://coding-intl.dashscope.aliyuncs.com/apps/anthropic',
+    claudeUseAuthToken: true,
+    claudeExtraEnv: {
+      ANTHROPIC_MODEL: 'qwen3.5-plus',
+    },
+  },
+  deepseek: {
+    id: 'deepseek',
+    label: 'DeepSeek',
+    defaultBaseUrl: 'https://api.deepseek.com/v1',
+    docs: 'https://api-docs.deepseek.com/guides/anthropic_api',
+    keyHelp:
+      '开放平台 API Key。官方 Claude Code 示例使用 `ANTHROPIC_AUTH_TOKEN` 与较长 `API_TIMEOUT_MS`；模型名等见文档，可用 --model 覆盖。',
+    claudeAnthropicBaseUrl: 'https://api.deepseek.com/anthropic',
+    claudeUseAuthToken: true,
+    claudeExtraEnv: {
+      API_TIMEOUT_MS: '600000',
+      ANTHROPIC_MODEL: 'deepseek-chat',
+      ANTHROPIC_SMALL_FAST_MODEL: 'deepseek-chat',
+      CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1',
+    },
+  },
+  fireworks: {
+    id: 'fireworks',
+    label: 'Fireworks AI',
+    defaultBaseUrl: 'https://api.fireworks.ai/inference/v1',
+    docs: 'https://docs.fireworks.ai/ecosystem/integrations/claude-code',
+    keyHelp:
+      'app.fireworks.ai 创建 API Key。文档使用 `ANTHROPIC_API_KEY` + `https://api.fireworks.ai/inference`。默认模型 ID 为官方示例中的 Kimi-2.5，可改用 GLM-5 等（见文档），并用 --model 覆盖各变量。',
+    claudeAnthropicBaseUrl: 'https://api.fireworks.ai/inference',
+    claudeUseAuthToken: false,
+    claudeExtraEnv: {
+      ANTHROPIC_MODEL: 'accounts/fireworks/models/kimi-k2p5',
+      ANTHROPIC_SMALL_FAST_MODEL: 'accounts/fireworks/models/kimi-k2p5',
+      ANTHROPIC_DEFAULT_SONNET_MODEL: 'accounts/fireworks/models/kimi-k2p5',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'accounts/fireworks/models/kimi-k2p5',
+      ANTHROPIC_DEFAULT_OPUS_MODEL: 'accounts/fireworks/models/kimi-k2p5',
+      CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS: '1',
+    },
+  },
   glm: {
     id: 'glm',
     label: '智谱 GLM (BigModel)',
@@ -57,6 +138,19 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
       ANTHROPIC_DEFAULT_HAIKU_MODEL: 'MiniMax-M2.7',
     },
   },
+  modelstudio_intl: {
+    id: 'modelstudio_intl',
+    label: '阿里云 Model Studio（国际 · 按量）',
+    defaultBaseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+    docs: 'https://www.alibabacloud.com/help/doc-detail/2949529.html',
+    keyHelp:
+      '仅 **新加坡区按量**（非 Coding Plan 专属 URL）。使用 `ANTHROPIC_API_KEY`（与文档一致）。Coding Plan 用户请用 **dashscope_intl**，勿混用。',
+    claudeAnthropicBaseUrl: 'https://dashscope-intl.aliyuncs.com/apps/anthropic',
+    claudeUseAuthToken: false,
+    claudeExtraEnv: {
+      ANTHROPIC_MODEL: 'qwen3.5-plus',
+    },
+  },
   moonshot: {
     id: 'moonshot',
     label: '月之暗面 Kimi (Moonshot)',
@@ -75,6 +169,20 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
       ENABLE_TOOL_SEARCH: 'false',
     },
   },
+  novita: {
+    id: 'novita',
+    label: 'Novita AI',
+    defaultBaseUrl: 'https://api.novita.ai/openai',
+    docs: 'https://novita.ai/docs/guides/claude-code',
+    keyHelp:
+      'Novita 控制台 API Key。Anthropic 兼容根见文档；模型 ID 以 [Anthropic 兼容模型列表](https://novita.ai/docs/guides/llm-anthropic-compatibility) 为准，可用 --model 覆盖。',
+    claudeAnthropicBaseUrl: 'https://api.novita.ai/anthropic',
+    claudeUseAuthToken: true,
+    claudeExtraEnv: {
+      ANTHROPIC_MODEL: 'moonshotai/kimi-k2-instruct',
+      ANTHROPIC_SMALL_FAST_MODEL: 'moonshotai/kimi-k2-instruct',
+    },
+  },
   openrouter: {
     id: 'openrouter',
     label: 'OpenRouter',
@@ -83,6 +191,16 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     keyHelp: '打开 OpenRouter → Keys → Create Key；用量与计费见控制台说明。',
     claudeAnthropicBaseUrl: 'https://openrouter.ai/api',
     claudeUseAuthToken: true,
+  },
+  siliconflow: {
+    id: 'siliconflow',
+    label: 'SiliconFlow（硅基流动）',
+    defaultBaseUrl: 'https://api.siliconflow.com/v1',
+    docs: 'https://docs.siliconflow.com/cn/usercases/use-siliconcloud-in-ClaudeCode',
+    keyHelp:
+      '控制台 API Key。文档使用 `ANTHROPIC_API_KEY`；Base 国内可用 `https://api.siliconflow.cn`（`set siliconflow --anthropic-base ...`）。**必须**指定模型：`claude-helper set siliconflow --key ... --model <模型ID>`（见 cloud.siliconflow.com/models）。',
+    claudeAnthropicBaseUrl: 'https://api.siliconflow.com',
+    claudeUseAuthToken: false,
   },
   volcengine: {
     id: 'volcengine',
@@ -110,6 +228,12 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
 };
 
 export const PROVIDER_IDS = Object.keys(PROVIDERS) as ProviderId[];
+
+/** init 向导列表：`glm` 置顶，其余按 id 字母序，避免供应商变多时首选项乱跳 */
+export const PROVIDER_IDS_WIZARD: ProviderId[] = (() => {
+  const rest = PROVIDER_IDS.filter((id) => id !== 'glm').sort((a, b) => a.localeCompare(b));
+  return ['glm', ...rest];
+})();
 
 export function isProviderId(s: string): s is ProviderId {
   return s in PROVIDERS;

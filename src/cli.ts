@@ -2,7 +2,13 @@
 import { Command } from 'commander';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
-import { PROVIDERS, PROVIDER_IDS, isProviderId, type ProviderId } from './providers.js';
+import {
+  PROVIDERS,
+  PROVIDER_IDS,
+  PROVIDER_IDS_WIZARD,
+  isProviderId,
+  type ProviderId,
+} from './providers.js';
 import {
   buildClaudeEnv,
   claudeEnvKeysToRemove,
@@ -311,7 +317,7 @@ async function cmdInit(): Promise<void> {
       name: 'provider',
       message: '第一步：选择要配置的供应商（回车 = 默认第一项）',
       default: INIT_DEFAULT_PROVIDER,
-      choices: PROVIDER_IDS.map((id) => ({
+      choices: PROVIDER_IDS_WIZARD.map((id) => ({
         name: `${PROVIDERS[id].label}（${id}）`,
         value: id,
       })),

@@ -206,6 +206,7 @@ Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无
 | `ProviderId` | 联合字面量类型，与 YAML 中 key 一致 |
 | `ProviderMeta` | `defaultBaseUrl`、`docs`、`keyHelp`、**必填** `claudeAnthropicBaseUrl`、`claudeUseAuthToken?`、`claudeExtraEnv?`（厂商文档要求的附加 `ANTHROPIC_*` / 超时等） |
 | `PROVIDERS` | 单一数据源，扩展新供应商时只改此文件 |
+| `PROVIDER_IDS` / `PROVIDER_IDS_WIZARD` | 全部 id；向导列表 **glm 置顶** 其余字母序，避免 `Object.keys` 顺序随对象字面量变化 |
 
 ### 5.2 `src/store.ts`
 
