@@ -20,8 +20,9 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     id: 'glm',
     label: '智谱 GLM (BigModel)',
     defaultBaseUrl: 'https://open.bigmodel.cn/api/paas/v4',
-    docs: 'https://open.bigmodel.cn/',
-    keyHelp: '打开智谱开放平台 → 控制台 → API Keys 创建密钥（Coding Plan / 通用 API Key 均可按文档选用）。',
+    docs: 'https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper',
+    keyHelp:
+      '按文档「快速开始」获取 API Key。若还要自动装 Claude Code、配 MCP、插件市场等，请用官方：npx @z_ai/coding-helper（与本工具分工不同，见 README）。',
     claudeAnthropicBaseUrl: 'https://open.bigmodel.cn/api/anthropic',
     claudeUseAuthToken: false,
   },

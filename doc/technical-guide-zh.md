@@ -26,7 +26,7 @@
 - 向 **OpenAI 兼容** 客户端导出 `OPENAI_*` 环境变量；
 - 向 **Claude Code** 导出或合并 `ANTHROPIC_*` 到 `~/.claude/settings.json` 的 `env`。
 
-产品形态上参考 [Z.AI Coding Tool Helper](https://docs.z.ai/devpack/extension/coding-tool-helper) 的向导与指引体验，但**刻意收窄**：不安装编码工具、不管理 MCP，只做密钥与对接说明。
+产品形态上与智谱 [一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper)（`@z_ai/coding-helper`）的向导体验相近，但**刻意收窄**：不安装编码工具、不管理 MCP，只做密钥与对接说明；完整装机请以官方文档为准。
 
 ### 1.2 解决的核心问题
 
@@ -349,7 +349,8 @@ npm run debug -- list
 
 ## 外部参考
 
+- [智谱 · 一键安装助手（GLM Coding Plan）](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper)（`@z_ai/coding-helper`；与本项目职责对比见 README）
 - [Claude Code settings](https://docs.anthropic.com/en/docs/claude-code/settings)
 - [OpenRouter × Claude Code](https://openrouter.ai/docs/guides/guides/coding-agents/claude-code-integration)
-- [Z.AI Coding Tool Helper](https://docs.z.ai/devpack/extension/coding-tool-helper)
+- [Z.AI Coding Tool Helper（国际站说明）](https://docs.z.ai/devpack/extension/coding-tool-helper)
 - [openclaw-cursor-brain technical-guide-zh.md](https://github.com/andeya/openclaw-cursor-brain/blob/main/doc/technical-guide-zh.md)（文档结构参考）

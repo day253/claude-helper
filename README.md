@@ -6,7 +6,7 @@
 
 面向 **Claude Code** 与 **OpenAI 兼容客户端**：在本地保存多家供应商的 **API Key**，交互时提示 **去哪里申请密钥**，并做 **网络检查**、**导出环境变量** 或 **合并写入** `~/.claude/settings.json`。
 
-思路类似 [Z.AI Coding Tool Helper](https://docs.z.ai/devpack/extension/coding-tool-helper) 的向导体验，但**刻意收窄范围**：不安装第三方编码工具、不管理 MCP，只做密钥保管与对接说明。
+智谱 **GLM 编码套餐** 官方装机向导见：[一键安装助手（Coding Tool Helper）](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper)（`npx @z_ai/coding-helper` / `coding-helper`）。**Claude Helper** 与之思路相近，但**刻意收窄**：不自动安装 CLI、不配 MCP/插件市场，只做 **Key 保管**、**网络检查**、**导出** 与 **`claude apply`**。国际站说明亦可对照 [Z.AI 文档](https://docs.z.ai/devpack/extension/coding-tool-helper)。
 
 配置文件：`~/.llm-providers/config.yaml`
 
@@ -54,7 +54,7 @@ GitHub 旧仓库 URL 一般会重定向到新名一段时间。
 
 | 供应商 | 申请密钥提示 | OpenAI 默认 Base | 内置 Anthropic Base（`claude apply`） |
 |--------|----------------|------------------|----------------------------------------|
-| **glm** | 智谱开放平台 → API Keys | `https://open.bigmodel.cn/api/paas/v4` | 有 → `https://open.bigmodel.cn/api/anthropic` |
+| **glm** | [一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper) 或开放平台 API Keys | `https://open.bigmodel.cn/api/paas/v4` | 有 → `https://open.bigmodel.cn/api/anthropic` |
 | **kimi** | Moonshot 开放平台 → API Key | `https://api.moonshot.cn/v1` | 无（需网关，见下） |
 | **minimax** | MiniMax 开放平台 | `https://api.minimax.chat/v1` | 无 |
 | **openrouter** | OpenRouter → Keys | `https://openrouter.ai/api/v1` | 有 → `https://openrouter.ai/api`（使用 `ANTHROPIC_AUTH_TOKEN`，`ANTHROPIC_API_KEY` 为空字符串） |
@@ -102,13 +102,16 @@ claude-helper claude apply
 4. `claude-helper set kimi --anthropic-base http://127.0.0.1:<端口>`（或文档给出的 anthropic 路径根）
 5. `claude-helper claude apply -p kimi`
 
-## 与 Coding Tool Helper 的差异
+## 与智谱官方「一键安装助手」的差异
 
-| | Coding Tool Helper | 本工具 |
-|--|-------------------|--------|
-| 范围 | 装工具、配 Plan、MCP 等 | **仅** Key + 导出 / 写入 Claude `env` |
-| 供应商 | 偏 GLM 生态 | GLM、Kimi、MiniMax、OpenRouter、火山等（可扩展） |
-| 配置落点 | 依工具而定 | `~/.llm-providers/config.yaml` + 可选 `~/.claude/settings.json` |
+官方文档：[接入指南 · 一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper)（NPM：`@z_ai/coding-helper`，命令 `coding-helper` / `chelper`，支持 `doctor` 等）。
+
+| | 官方 Coding Tool Helper | Claude Helper（本仓库） |
+|--|-------------------------|-------------------------|
+| 范围 | 装编码工具、套餐、MCP、Claude 插件市场等 | **仅** Key、检查、`export` / `claude apply` |
+| 启动 | `npx @z_ai/coding-helper` | `claude-helper`（无参即配智谱一家） |
+| 供应商 | 以 GLM 编码套餐为中心 | GLM + Kimi、MiniMax、OpenRouter、火山等 |
+| 配置落点 | 依官方向导 | `~/.llm-providers/config.yaml` + 可选 `~/.claude/settings.json` |
 
 ## 发布到 GitHub（例如账号或组织 `day253`）
 

@@ -323,7 +323,7 @@ const program = new Command();
 program
   .name('claude-helper')
   .description('Claude Helper：多供应商 API Key、网络检查与 Claude Code 配置')
-  .version('0.3.3');
+  .version('0.3.4');
 
 program
   .command('check')
