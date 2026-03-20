@@ -61,7 +61,8 @@ llm-providers-config/
 │   ├── cli.ts                # 命令注册与业务编排
 │   ├── providers.ts          # 供应商元数据与 ProviderId
 │   ├── store.ts              # YAML 读写、脱敏
-│   └── claude.ts             # Claude settings.json 合并与 ANTHROPIC_* 计算
+│   ├── claude.ts             # settings.json 合并、ANTHROPIC_*、effectiveOpenAIBase
+│   └── validate.ts           # 保存后检查、网络探测、启动 Claude 提示
 └── dist/                     # 构建产物（git 可忽略）
 ```
 
@@ -80,6 +81,7 @@ flowchart TB
     P[providers.ts]
     S[store.ts]
     C[claude.ts]
+    V[validate.ts]
   end
   subgraph disk [本地持久化]
     Y["/.llm-providers/config.yaml"]
@@ -89,6 +91,9 @@ flowchart TB
   CLI --> P
   CLI --> S
   CLI --> C
+  CLI --> V
+  V --> C
+  V --> P
   S --> Y
   C --> J
   C --> B
@@ -211,14 +216,22 @@ Claude Code 期望 **Anthropic Messages** 兼容端点。多数国内 OpenAI 兼
 
 | 函数 | 说明 |
 |------|------|
+| `effectiveOpenAIBase` | OpenAI 兼容 `export` 用 Base URL |
 | `effectiveClaudeBase` | 网关覆盖 vs 内置 Anthropic Base |
 | `buildClaudeEnv` | 生成待写入的 `ANTHROPIC_*` 键值 |
 | `claudeEnvKeysToRemove` | 切换认证模式时清理残留键 |
 | `mergeClaudeSettings` | 备份 + JSON 解析 + env 合并 + 写回 |
 
-### 5.4 `src/cli.ts`
+### 5.4 `src/validate.ts`
 
-- 使用 Commander 注册：`list`、`show`、`set`、`unset`、`active`、`export`、`init`、`claude export`、`claude apply`。
+| 导出 | 说明 |
+|------|------|
+| `probeUrl` | `fetch` + 超时，用于判断 API 根路径是否可达（不校验厂商鉴权） |
+| `validateAfterSave` | `init` / `set` / `active` 保存后及 `check` 命令：列出已填 Key、探测默认供应商的 OpenAI/Claude 端点、`buildClaudeEnv` 试组装，并打印启动 Claude Code 的步骤 |
+
+### 5.5 `src/cli.ts`
+
+- 使用 Commander 注册：`list`、`show`、`set`、`unset`、`active`、`export`、`check`、`init`、`claude export`、`claude apply`。
 - `resolveProvider`：`--provider` / `-p` 优先，否则 `active_provider`。
 - `fatal`：统一 `process.exit(1)`。
 

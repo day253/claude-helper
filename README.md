@@ -26,12 +26,13 @@ npm link   # 可选，全局可用 llm-config
 
 | 命令 | 说明 |
 |------|------|
-| `llm-config init` | 新手向导：**第一步直接回车**即选「推荐」；再逐项只问 API Key（可先显示文档链接），不需要的 Key 回车跳过 |
+| `llm-config init` | 新手向导：**第一步直接回车**即选「推荐」；再逐项只问 API Key（可先显示文档链接），不需要的 Key 回车跳过；**结束后自动检查网络并提示如何启动 Claude** |
+| `llm-config check` | 随时复查：已保存 Key、默认供应商、端点 HTTP 探测；并打印 **启动 Claude Code** 的步骤（与 init/set/active 保存后自动执行的内容相同） |
 | `llm-config list` | 列出全部（含 OpenAI base / Claude base、密钥脱敏） |
 | `llm-config show <provider>` | 查看单个 |
-| `llm-config set <provider>` | 无其它参数时**交互只填 Key**；可用 `--key` / `--base` / `--anthropic-base` / `--model` / `--note` |
+| `llm-config set <provider>` | 无其它参数时**交互只填 Key**；可用 `--key` / `--base` / `--anthropic-base` / `--model` / `--note`；**保存后自动检查并提示启动 Claude** |
 | `llm-config unset <provider> [field]` | 删除字段或整段供应商配置 |
-| `llm-config active [provider]` | 默认供应商（`export` / `claude` 省略 `-p` 时用） |
+| `llm-config active [provider]` | 默认供应商（`export` / `claude` 省略 `-p` 时用）；**设置后会自动检查并提示启动 Claude** |
 | `llm-config export [-p id] [-f shell\|json]` | 输出 `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `OPENAI_MODEL`（LiteLLM、OpenAI SDK 等） |
 | `llm-config claude export [-p id]` | 打印 `export ANTHROPIC_*=...`，可在 shell 中 `eval` |
 | `llm-config claude apply [-p id]` | 将本次计算的 `ANTHROPIC_*` **合并进** `~/.claude/settings.json` 的 `env`；**写入前备份**为 `settings.json.bak.<时间戳>` |

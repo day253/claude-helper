@@ -10,6 +10,11 @@ export function claudeSettingsPath(): string {
   return join(homedir(), '.claude', 'settings.json');
 }
 
+/** OpenAI 兼容 API 根 URL（export 用） */
+export function effectiveOpenAIBase(id: ProviderId, e: ProviderEntry | undefined): string {
+  return e?.base_url?.trim() || PROVIDERS[id].defaultBaseUrl;
+}
+
 /** Claude Code 使用的 Anthropic 兼容根 URL */
 export function effectiveClaudeBase(id: ProviderId, e: ProviderEntry | undefined): string | undefined {
   const override = e?.anthropic_base_url?.trim();

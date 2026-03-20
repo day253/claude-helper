@@ -1,6 +1,6 @@
 {
   "name": "llm-providers-config",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "多供应商 LLM API Key 本地配置，导出 OpenAI_* 或写入 Claude Code settings.json",
   "type": "module",
   "bin": {

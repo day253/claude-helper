@@ -8,8 +8,10 @@ import {
   claudeEnvKeysToRemove,
   claudeSettingsPath,
   effectiveClaudeBase,
+  effectiveOpenAIBase,
   mergeClaudeSettings,
 } from './claude.js';
+import { validateAfterSave } from './validate.js';
 import {
   configPath,
   loadConfig,
@@ -25,10 +27,6 @@ function resolveProvider(p: string | undefined, cfg: ConfigFile): ProviderId | u
   if (p && isProviderId(p)) return p;
   if (cfg.active_provider) return cfg.active_provider;
   return undefined;
-}
-
-function effectiveBase(id: ProviderId, entry: ProviderEntry | undefined): string {
-  return entry?.base_url?.trim() || PROVIDERS[id].defaultBaseUrl;
 }
 
 function printMissingClaudeBase(id: ProviderId): void {
@@ -55,7 +53,7 @@ async function cmdList(): Promise<void> {
     const claudeBase = effectiveClaudeBase(id, e) ?? '(未设置，见 claude apply 说明)';
     console.log(
       `${chalk.bold(meta.label)} (${id})${active}\n` +
-        `  openai base:    ${effectiveBase(id, e)}\n` +
+        `  openai base:    ${effectiveOpenAIBase(id, e)}\n` +
         `  claude base:    ${claudeBase}\n` +
         `  key:            ${maskKey(e?.api_key)}\n` +
         `  model:          ${e?.default_model ?? '(未设置)'}\n`,
@@ -68,7 +66,7 @@ async function cmdShow(id: ProviderId): Promise<void> {
   const e = cfg.providers[id];
   const meta = PROVIDERS[id];
   console.log(chalk.bold(meta.label));
-  console.log(`  base_url:            ${effectiveBase(id, e)}`);
+  console.log(`  base_url:            ${effectiveOpenAIBase(id, e)}`);
   console.log(`  anthropic_base_url:  ${e?.anthropic_base_url ?? '(未设置)'}`);
   console.log(`  api_key:             ${maskKey(e?.api_key)}`);
   console.log(`  default_model:       ${e?.default_model ?? ''}`);
@@ -136,6 +134,7 @@ async function cmdSet(
 
   saveConfig(cfg);
   console.log(chalk.green(`已保存 ${PROVIDERS[id].label} 配置`));
+  await validateAfterSave(loadConfig());
 }
 
 async function cmdUnset(id: ProviderId, field?: string): Promise<void> {
@@ -177,6 +176,11 @@ async function cmdActive(id: ProviderId | undefined): Promise<void> {
   }
   saveConfig({ ...cfg, active_provider: id });
   console.log(chalk.green(`默认供应商已设为 ${PROVIDERS[id].label}`));
+  await validateAfterSave(loadConfig());
+}
+
+async function cmdCheck(): Promise<void> {
+  await validateAfterSave(loadConfig());
 }
 
 function cmdExport(provider: ProviderId | undefined, format: 'shell' | 'json'): void {
@@ -191,7 +195,7 @@ function cmdExport(provider: ProviderId | undefined, format: 'shell' | 'json'): 
     console.error(chalk.red(`${id} 未配置 api_key`));
     process.exit(1);
   }
-  const base = effectiveBase(id, e);
+  const base = effectiveOpenAIBase(id, e);
   const model = e.default_model ?? '';
 
   if (format === 'json') {
@@ -373,14 +377,19 @@ async function cmdInit(): Promise<void> {
   cfg = { ...cfg, active_provider: active };
   saveConfig(cfg);
   console.log(chalk.green('\n初始化完成。查看: llm-config list'));
-  console.log(chalk.dim('Claude Code：llm-config claude apply 或 llm-config claude export'));
+  await validateAfterSave(loadConfig());
 }
 
 const program = new Command();
 program
   .name('llm-config')
   .description('多供应商 LLM API Key 本地配置，并导出给 OpenAI 客户端或 Claude Code')
-  .version('0.2.1');
+  .version('0.2.2');
+
+program
+  .command('check')
+  .description('检查已保存的 Key / 默认供应商，并探测端点网络；提示如何启动 Claude Code')
+  .action(() => cmdCheck().catch(fatal));
 
 program
   .command('list')
