@@ -8,7 +8,7 @@
 
 智谱 **GLM 编码套餐**：[一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper#) · [Claude Code 专页](https://docs.bigmodel.cn/cn/coding-plan/tool/claude)。MiniMax：[Claude Code 接入](https://platform.minimax.io/docs/token-plan/claude-code)。**Claude Helper** 不替代官方装机向导（`npx @z_ai/coding-helper`），只做 **Key**、**检查**、**export** / **`claude apply`**；更多链接见 [vendor-docs-zh.md](doc/vendor-docs-zh.md)。
 
-配置文件：`~/.llm-providers/config.yaml`
+配置文件：`~/.llm-providers/config.yaml`。可选顶层字段 **`wizard_lang`**：`zh` | `en`，控制无参向导、`check`、以及 `claude export` / `apply` 部分提示的语言；首次进入向导会询问语言，主菜单也可切换。
 
 **0.6.2**：向导强化**可读性**（开场说明、当前配置一览、①②③ 步骤编号、检查/同步后的「接下来」列表）。**0.6.0 起**内置 **14 家**供应商（均有厂商文档给出的 **Anthropic 兼容** Claude Code 根 URL）：`byteplus`、`dashscope`、`dashscope_intl`、`deepseek`、`fireworks`、`glm`、`minimax`、`modelstudio_intl`、`moonshot`、`novita`、`openrouter`、`siliconflow`、`volcengine`、`zai`。完整链接见 [doc/vendor-docs-zh.md](doc/vendor-docs-zh.md)。未知 id 会在读取 YAML 时忽略；无效 `active_provider` 会清空。
 

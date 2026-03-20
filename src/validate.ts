@@ -2,12 +2,15 @@ import chalk from 'chalk';
 import { PROVIDERS, PROVIDER_IDS, type ProviderId } from './providers.js';
 import { buildClaudeEnv, claudeSettingsPath, effectiveClaudeBase } from './claude.js';
 import type { ConfigFile } from './store.js';
+import { tpl, type WizardLang, wizardCopy } from './wizard-locale.js';
 
 const PROBE_TIMEOUT_MS = 8000;
 const UA = 'claude-helper/check';
 
-/** 轻量探测：能连上主机即可（多数 API 根路径返回 401/404 仍算「可达」） */
-export async function probeUrl(url: string): Promise<{ ok: boolean; detail: string }> {
+export async function probeUrl(
+  url: string,
+  lang: WizardLang = 'zh',
+): Promise<{ ok: boolean; detail: string }> {
   try {
     const res = await fetch(url, {
       method: 'GET',
@@ -17,7 +20,10 @@ export async function probeUrl(url: string): Promise<{ ok: boolean; detail: stri
     });
     const st = res.status;
     if (st >= 500) {
-      return { ok: false, detail: `HTTP ${st}（服务端报错）` };
+      return {
+        ok: false,
+        detail: lang === 'zh' ? `HTTP ${st}（服务端报错）` : `HTTP ${st} (server error)`,
+      };
     }
     return { ok: true, detail: `HTTP ${st}` };
   } catch (e) {
@@ -26,25 +32,32 @@ export async function probeUrl(url: string): Promise<{ ok: boolean; detail: stri
   }
 }
 
+function resolveCheckLang(cfg: ConfigFile, override?: WizardLang): WizardLang {
+  return override ?? cfg.wizard_lang ?? 'zh';
+}
+
 /**
  * 保存配置后自动调用：结构检查 + 默认供应商端点探测 + 启动 Claude 提示
  */
-export async function validateAfterSave(cfg: ConfigFile): Promise<void> {
-  console.log(chalk.bold('\n── 自动检查 ──'));
+export async function validateAfterSave(cfg: ConfigFile, langOverride?: WizardLang): Promise<void> {
+  const lang = resolveCheckLang(cfg, langOverride);
+  const c = wizardCopy(lang).check;
+
+  console.log(chalk.bold(c.title));
 
   const withKey = PROVIDER_IDS.filter((id) => cfg.providers[id]?.api_key?.trim());
   if (withKey.length === 0) {
-    console.log(chalk.yellow('还没有任何供应商填写 API Key；补全后再运行：claude-helper check'));
-    printClaudeHelp(cfg, false, false);
+    console.log(chalk.yellow(c.noKeys));
+    printClaudeHelp(cfg, false, false, lang);
     return;
   }
 
-  console.log(chalk.green(`已保存 Key 的供应商：${withKey.join('、')}`));
+  console.log(chalk.green(`${c.savedWithKey}${withKey.join(lang === 'zh' ? '、' : ', ')}`));
 
   const active = cfg.active_provider;
   if (!active) {
-    console.log(chalk.yellow('未设置默认供应商。执行：claude-helper active <id>'));
-    printClaudeHelp(cfg, false, false);
+    console.log(chalk.yellow(c.noActive));
+    printClaudeHelp(cfg, false, false, lang);
     return;
   }
 
@@ -52,10 +65,13 @@ export async function validateAfterSave(cfg: ConfigFile): Promise<void> {
   if (!entry?.api_key?.trim()) {
     console.log(
       chalk.yellow(
-        `默认供应商是「${PROVIDERS[active].label}」，但未配置 Key；请改 active 或执行：claude-helper set ${active}`,
+        tpl(c.activeNoKeyTpl, {
+          LABEL: PROVIDERS[active].label,
+          ID: active,
+        }),
       ),
     );
-    printClaudeHelp(cfg, false, false);
+    printClaudeHelp(cfg, false, false, lang);
     return;
   }
 
@@ -66,27 +82,25 @@ export async function validateAfterSave(cfg: ConfigFile): Promise<void> {
 
   if (claudeBase) {
     probes.push(
-      probeUrl(claudeBase).then((r) => {
+      probeUrl(claudeBase, lang).then((r) => {
         if (!r.ok) anyNetFail = true;
         const mark = r.ok ? chalk.green('✓') : chalk.red('✗');
-        console.log(`${mark} Claude Code（Anthropic 兼容）地址\n    ${claudeBase}\n    ${r.detail}`);
+        console.log(`${mark}${c.probeClaudeTitle}\n    ${claudeBase}\n    ${r.detail}`);
       }),
     );
   } else {
     console.log(
       chalk.yellow(
-        `○ 未能解析 Anthropic Base（配置异常）；可尝试：claude-helper set ${active} --anthropic-base <URL>`,
+        tpl(c.noAnthropicBaseTpl, {
+          ID: active,
+        }),
       ),
     );
   }
 
   await Promise.all(probes);
   if (anyNetFail) {
-    console.log(
-      chalk.dim(
-        '    若需代理，可设置 HTTPS_PROXY（参见 https://docs.z.ai/devpack/extension/coding-tool-helper 排障）',
-      ),
-    );
+    console.log(chalk.dim(c.proxyHint));
   }
 
   let canBuildClaude = false;
@@ -94,52 +108,52 @@ export async function validateAfterSave(cfg: ConfigFile): Promise<void> {
     try {
       buildClaudeEnv(active, entry);
       canBuildClaude = true;
-      console.log(chalk.green('✓ 可生成 Claude Code 所需环境变量（网络与 Key 格式层面未再校验厂商鉴权）'));
+      console.log(chalk.green(c.canBuildEnv));
     } catch {
-      console.log(chalk.red('✗ 无法组合出 Claude 环境变量'));
+      console.log(chalk.red(c.cannotBuildEnv));
     }
   }
 
-  printClaudeHelp(cfg, true, canBuildClaude);
+  printClaudeHelp(cfg, true, canBuildClaude, lang);
 }
 
-function printClaudeHelp(cfg: ConfigFile, hasActiveKey: boolean, canApply: boolean): void {
-  console.log(chalk.bold('\n── 启动 Claude Code ──'));
+function printClaudeHelp(
+  cfg: ConfigFile,
+  hasActiveKey: boolean,
+  canApply: boolean,
+  lang: WizardLang,
+): void {
+  const c = wizardCopy(lang).check;
+  console.log(chalk.bold(c.startTitle));
   const active = cfg.active_provider;
   const entry = active ? cfg.providers[active] : undefined;
 
   if (!hasActiveKey || !active || !entry?.api_key?.trim()) {
-    console.log(chalk.cyan('1) 先保存 API Key，并设置默认：claude-helper active <供应商>（见 claude-helper --help 中的 provider 列表）'));
-    console.log(chalk.dim('   说明：https://docs.anthropic.com/en/docs/claude-code/overview'));
-    console.log(chalk.dim('   随时复查：claude-helper check\n'));
+    console.log(chalk.cyan(c.startNeedKey));
+    console.log(chalk.dim(c.startDoc));
+    console.log(chalk.dim(c.startCheck));
     return;
   }
 
   if (canApply) {
     console.log(
-      chalk.cyan(
-        `1) 把环境变量写入本机 Claude 配置（会自动备份已有 ${claudeSettingsPath()}）：\n   ${chalk.bold('claude-helper claude apply')}`,
-      ),
+      chalk.cyan(`${c.startApply1}${claudeSettingsPath()}${c.startApply2}${chalk.bold('claude-helper claude apply')}`),
     );
     console.log(
       chalk.cyan(
-        `2) 在终端启动 Claude Code（若已安装 CLI）：\n   ${chalk.bold('claude')}\n   或在常用目录打开你平时的 Claude Code 入口。`,
+        `2) ${lang === 'zh' ? '在终端启动 Claude Code（若已安装 CLI）：' : 'Start Claude Code in terminal (if CLI installed):'}\n   ${chalk.bold('claude')}`,
       ),
     );
-    console.log(
-      chalk.dim(
-        '   官方文档：https://docs.anthropic.com/en/docs/claude-code/overview\n   若只想临时生效当前终端：claude-helper claude export 后 eval 打印的内容\n',
-      ),
-    );
+    console.log(chalk.dim(c.startApplyNote));
     return;
   }
 
   console.log(
     chalk.yellow(
-      '无法组合 Claude 环境变量。请检查 Key 与 Base，或尝试：\n' +
-        `   claude-helper set ${active} --anthropic-base <Anthropic 兼容根 URL>\n` +
-        '   claude-helper claude apply\n',
+      tpl(c.startFixTpl, {
+        ID: active,
+      }),
     ),
   );
-  console.log(chalk.dim('   详见 README 与 doc/technical-guide-zh.md\n'));
+  console.log(chalk.dim(c.startReadme));
 }

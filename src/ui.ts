@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import type { WizardCopy } from './wizard-locale.js';
 
 const INNER = 57;
 
@@ -7,28 +8,22 @@ function padLine(s: string): string {
   return `║ ${t.padEnd(INNER)} ║`;
 }
 
-/** 顶部大标题（对齐 coding-helper 的 box） */
-export function printWizardBanner(title: string, subtitle?: string): void {
+export function printWizardBanner(s: WizardCopy, title?: string, subtitle?: string): void {
   const top = `╔${'═'.repeat(INNER + 2)}╗`;
   const bot = `╚${'═'.repeat(INNER + 2)}╝`;
   console.log(chalk.cyan(top));
-  console.log(chalk.cyan.bold(padLine(` ${title.trim()} `)));
-  if (subtitle) console.log(chalk.cyan(padLine(subtitle)));
+  console.log(chalk.cyan.bold(padLine(` ${(title ?? s.bannerTitle).trim()} `)));
+  console.log(chalk.cyan(padLine(subtitle ?? s.bannerSubtitle)));
   console.log(chalk.cyan(bot));
 }
 
-/** 开场说明：先讲清「能做什么 / 不能做什么」，降低心智负担 */
-export function printWizardIntro(): void {
-  console.log(chalk.bold('\n本向导会帮你'));
-  console.log('  · 把 API Key 存在本机（~/.llm-providers/config.yaml）');
-  console.log('  · 可选：把当前默认厂家**同步进** Claude Code（~/.claude/settings.json）');
-  console.log(chalk.bold('\n和官方「一键安装助手」的区别'));
-  console.log(
-    '  · 官方 ' +
-      chalk.cyan('npx @z_ai/coding-helper') +
-      '：装 CLI、多工具（OpenCode / Crush…）、MCP、插件市场等',
-  );
-  console.log('  · 本工具：只做 **Key + 检查 + 同步 Claude Code**，更轻、步骤更少');
+export function printWizardIntro(s: WizardCopy): void {
+  console.log(chalk.bold(`\n${s.introTitle}`));
+  console.log(s.introLine1);
+  console.log(s.introLine2);
+  console.log(chalk.bold(`\n${s.introVs}`));
+  console.log(s.introOfficial);
+  console.log(s.introThisTool);
 }
 
 export interface WizardStatusSummary {
@@ -37,60 +32,52 @@ export interface WizardStatusSummary {
   keyMasked: string;
 }
 
-/** 主菜单前展示「当前配置」，与 coding-helper 的 Configuration 区块同理 */
-export function printWizardStatus(s: WizardStatusSummary): void {
-  console.log(chalk.bold('\n当前配置'));
-  if (s.activeId && s.activeLabel) {
-    console.log(`  默认供应商：${s.activeLabel}（${chalk.cyan(s.activeId)}）`);
+export function printWizardStatus(s: WizardCopy, st: WizardStatusSummary): void {
+  console.log(chalk.bold(`\n${s.statusTitle}`));
+  if (st.activeId && st.activeLabel) {
+    console.log(`  ${s.statusDefault}${st.activeLabel}（${chalk.cyan(st.activeId)}）`);
   } else {
-    console.log(`  默认供应商：${chalk.yellow('尚未选择')}（建议先执行「配置 API Key」）`);
+    console.log(
+      `  ${s.statusDefault}${chalk.yellow(s.statusNotChosen)} ${chalk.dim(s.statusSuggest)}`,
+    );
   }
-  console.log(`  API Key：${s.keyMasked}`);
-  console.log(chalk.dim('  └ 未执行「同步」时，Claude Code 可能仍用旧 settings 或环境变量'));
+  console.log(`  ${s.statusApiKey}${st.keyMasked}`);
+  console.log(chalk.dim(s.statusFootnote));
 }
 
 export function printSection(title: string): void {
   console.log(chalk.bold(`\n── ${title} ──`));
 }
 
-/** 统一操作说明，避免每屏重复多段提示 */
-export function printOperationHint(): void {
-  console.log(chalk.dim('\n操作：↑↓ 移动高亮  ·  Enter 确认\n'));
+export function printOperationHint(s: WizardCopy): void {
+  console.log(chalk.dim(s.opHint));
 }
 
-export function printClaudeGlobalWarning(): void {
-  console.log(
-    chalk.yellow(
-      '⚠️  注意：即将修改 Claude Code 的**用户级**配置（~/.claude/settings.json），**所有文件夹**里的 Claude 都会受影响。',
-    ),
-  );
-  console.log(chalk.dim('   已有文件会先自动备份为 settings.json.bak.<时间戳>\n'));
+export function printClaudeGlobalWarning(s: WizardCopy): void {
+  console.log(chalk.yellow(s.warnClaudeGlobal1));
+  console.log(chalk.dim(s.warnClaudeGlobal2));
 }
 
-export function printConfigSyncSummary(params: {
-  providerLabel: string;
-  providerId: string;
-  keyMasked: string;
-  claudeBase: string;
-}): void {
+export function printConfigSyncSummary(
+  s: WizardCopy,
+  params: {
+    providerLabel: string;
+    providerId: string;
+    keyMasked: string;
+    claudeBase: string;
+  },
+): void {
   const { providerLabel, providerId, keyMasked, claudeBase } = params;
-  console.log(chalk.bold('\n┌ Claude Helper（本地已保存）'));
-  console.log(`│  厂家：${providerLabel}（${providerId}）`);
-  console.log(`│  Key： ${keyMasked}`);
-  console.log(chalk.bold('└ Claude Code（下次「同步」时将写入）'));
-  console.log(`   Anthropic 根：${claudeBase}`);
-  console.log(
-    chalk.green(
-      '\n✅ 已写入本地。若要让终端里的 claude 用上这家，请在下一步选「同步到 Claude Code」。',
-    ),
-  );
+  console.log(chalk.bold(`\n${s.syncLocalHeader}`));
+  console.log(`${s.syncVendor}${providerLabel}（${providerId}）`);
+  console.log(`${s.syncKey}${keyMasked}`);
+  console.log(chalk.bold(s.syncClaudeHeader));
+  console.log(`${s.syncAnthropicRoot}${claudeBase}`);
+  console.log(chalk.green(s.syncDone));
 }
 
-export function printClaudeDoneHint(): void {
-  console.log(
-    chalk.cyan.bold('\n接下来在终端里'),
-    chalk.dim('（建议在项目根目录新开一个终端）\n'),
-  );
-  console.log(`  ${chalk.bold('claude')}`, chalk.dim('  ← 启动 Claude Code'));
-  console.log(chalk.dim('  若提示未安装：npm install -g @anthropic-ai/claude-code\n'));
+export function printClaudeDoneHint(s: WizardCopy): void {
+  console.log(chalk.cyan.bold(s.doneTitle), chalk.dim(s.doneOpenTerminal));
+  console.log(`  ${chalk.bold('claude')}`, chalk.dim(s.doneRun));
+  console.log(chalk.dim(s.doneInstall));
 }

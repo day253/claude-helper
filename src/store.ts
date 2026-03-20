@@ -3,6 +3,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import yaml from 'js-yaml';
 import { PROVIDER_IDS, isProviderId, type ProviderId } from './providers.js';
+import { parseWizardLang, type WizardLang } from './wizard-locale.js';
 
 export interface ProviderEntry {
   api_key?: string;
@@ -17,6 +18,8 @@ export interface ProviderEntry {
 }
 
 export interface ConfigFile {
+  /** 交互向导语言（无参 / init / check 文案） */
+  wizard_lang?: WizardLang;
   /** 用于 `export` 未指定供应商时的默认项 */
   active_provider?: ProviderId;
   providers: Partial<Record<ProviderId, ProviderEntry>>;
@@ -55,7 +58,9 @@ export function loadConfig(): ConfigFile {
       active_provider = ap;
     }
 
-    return { active_provider, providers };
+    const wizard_lang = parseWizardLang(parsed.wizard_lang);
+
+    return { wizard_lang, active_provider, providers };
   } catch {
     return defaultConfig();
   }

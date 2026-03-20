@@ -214,7 +214,7 @@ Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无
 
 | 导出 | 说明 |
 |------|------|
-| `loadConfig` / `saveConfig` | 读写 `~/.llm-providers/config.yaml`；`loadConfig` 只保留当前 `ProviderId`，并校验 `active_provider` |
+| `loadConfig` / `saveConfig` | 读写 `~/.llm-providers/config.yaml`；解析可选顶层 `wizard_lang`（`zh` \| `en`，非法则忽略）；`loadConfig` 只保留当前 `ProviderId`，并校验 `active_provider` |
 | `ProviderEntry` | `api_key`、`base_url`、`anthropic_base_url`、`default_model`、`note` |
 | `maskKey` | list/show 时脱敏 |
 
@@ -233,12 +233,20 @@ Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无
 | 导出 | 说明 |
 |------|------|
 | `probeUrl` | `fetch` + 超时，用于判断 API 根路径是否可达（不校验厂商鉴权） |
-| `validateAfterSave` | `init` / `set` / `active` 保存后及 `check` 命令：列出已填 Key、**仅**对默认供应商的 **Anthropic 兼容根** 做 HTTP 探测（OpenAI export Base 不探测）、`buildClaudeEnv` 试组装，并打印启动 Claude Code 的步骤 |
+| `validateAfterSave` | `init` / `set` / `active` 保存后及 `check` 命令：列出已填 Key、**仅**对默认供应商的 **Anthropic 兼容根** 做 HTTP 探测（OpenAI export Base 不探测）、`buildClaudeEnv` 试组装，并打印启动 Claude Code 的步骤；文案语言默认取 `cfg.wizard_lang`，可选第二参数覆盖 |
+
+### 5.4.1 `src/wizard-locale.ts`
+
+| 导出 | 说明 |
+|------|------|
+| `wizardCopy` / `WIZARD_LOCALE` | 向导与检查的中英文字段；`tpl` 做 `$VAR` 替换 |
+| `inferWizardLangDefault` | 未配置时默认语言：看 `LC_ALL` / `LANG` 是否以 `zh` / `en` 开头 |
+| `parseWizardLang` / `maskKeyWizard` | YAML 校验；向导内 Key 脱敏与「未设置」文案随语言变化 |
 
 ### 5.5 `src/cli.ts`
 
 - 使用 Commander 注册：`list`、`show`、`set`、`unset`、`active`、`export`、`check`、`init`、`claude export`、`claude apply`。
-- 无参 / `init`：`runSetupWizard()` **循环主菜单**（参考 `@z_ai/coding-helper`：**先说明能做什么**、**再展示当前配置**、**再给出编号选项**）；检查 / 同步后使用 **列表** 选择返回或退出；写入 `settings.json` 前 **Warning + confirm**。
+- 无参 / `init`：`runSetupWizard()` **循环主菜单**（参考 `@z_ai/coding-helper`：**先说明能做什么**、**再展示当前配置**、**再给出编号选项**）；若配置中尚无 `wizard_lang`，**先选引导语言**并写入 YAML；主菜单含 **语言切换**；检查 / 同步后使用 **列表** 选择返回或退出；写入 `settings.json` 前 **Warning + 列表二选一**（↑↓ + Enter，无需输入 y/n）。
 - `resolveProvider`：`--provider` / `-p` 优先，否则 `active_provider`。
 - `fatal`：统一 `process.exit(1)`。
 - `version.ts`：从 `package.json` 读取版本供 `commander -V` 使用。
@@ -247,7 +255,7 @@ Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无
 
 | 导出 | 说明 |
 |------|------|
-| `printWizardBanner` | 顶部双线框标题 |
+| `printWizardBanner` | 顶部双线框标题（文案来自 `WizardCopy`） |
 | `printWizardIntro` | 开场：本向导做什么 vs 官方 `coding-helper` |
 | `printWizardStatus` | 主菜单前「当前配置」（默认厂家、Key 脱敏） |
 | `printOperationHint` | 统一 ↑↓ / Enter 说明，避免每屏重复 |
