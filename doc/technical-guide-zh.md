@@ -114,7 +114,7 @@ flowchart TB
 
 ### 3.1 配置写入（init / set）
 
-`init` 第一步为 **list**（非 checkbox）：默认高亮「推荐：全部供应商」，**直接回车**即可；可选「仅 Claude 可一键 apply 的子集」或「自定义勾选」。面向新手，避免未按空格导致零选项退出。
+`init` 第一步为 **list**：默认 **只配置一家**（回车即可）；第二步 **list** 选具体供应商（默认智谱 `glm`）。仅配一家时跳过「默认供应商」提问并自动 `active`。另可选全部过一遍、两家 Claude-ready、或自定义 checkbox。
 
 ```mermaid
 sequenceDiagram

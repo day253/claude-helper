@@ -314,19 +314,23 @@ async function cmdInit(): Promise<void> {
     {
       type: 'list',
       name: 'preset',
-      message: '第一步：要选哪些供应商？（回车 = 第一项推荐）',
-      default: 'all',
+      message: '第一步：要选多少家？（回车 = 只配一家，最适合新手）',
+      default: 'single',
       choices: [
         {
-          name: `推荐：全部列一遍（${PROVIDER_IDS.length} 家），没有账号的 Key 直接回车跳过即可`,
+          name: '推荐：只配置一家（下一步选哪家，填一个 Key 即可）',
+          value: 'single' as const,
+        },
+        {
+          name: `全部过一遍（${PROVIDER_IDS.length} 家），没有的 Key 可回车跳过`,
           value: 'all' as const,
         },
         {
-          name: `省事：只配置 Claude Code 能一键写入的（${CLAUDE_READY_IDS.map((i) => PROVIDERS[i].label).join('、')}）`,
+          name: `两家：Claude Code 能一键写入的（${CLAUDE_READY_IDS.map((i) => PROVIDERS[i].label).join('、')}）`,
           value: 'claude_ready' as const,
         },
         {
-          name: '自定义：用手动勾选（空格选中，回车确认）',
+          name: '自定义：手动勾选（空格选中，回车确认）',
           value: 'custom' as const,
         },
       ],
@@ -334,7 +338,22 @@ async function cmdInit(): Promise<void> {
   ]);
 
   let which: ProviderId[];
-  if (preset === 'all') {
+  if (preset === 'single') {
+    const defaultSingle: ProviderId = 'glm';
+    const { one } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'one',
+        message: '选哪一家？（回车默认智谱 GLM，对 Claude Code 最省事）',
+        default: defaultSingle,
+        choices: PROVIDER_IDS.map((id) => ({
+          name: `${PROVIDERS[id].label} (${id})`,
+          value: id,
+        })),
+      },
+    ]);
+    which = [one as ProviderId];
+  } else if (preset === 'all') {
     which = [...PROVIDER_IDS];
   } else if (preset === 'claude_ready') {
     which = [...CLAUDE_READY_IDS];
@@ -358,22 +377,36 @@ async function cmdInit(): Promise<void> {
     return;
   }
   let cfg = loadConfig();
-  console.log(chalk.dim('\n接下来逐个询问 API Key；不需要的供应商在密码行直接回车跳过即可。\n'));
+  console.log(
+    chalk.dim(
+      which.length === 1
+        ? '\n请输入该供应商的 API Key。\n'
+        : '\n接下来逐个询问 API Key；不需要的供应商在密码行直接回车跳过即可。\n',
+    ),
+  );
   for (const id of which) {
     cfg = await promptSet(id, cfg);
   }
-  const { active } = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'active',
-      message: '默认供应商（export / claude 省略 -p 时用，回车 = 第一项）',
-      default: which[0],
-      choices: which.map((id) => ({
-        name: PROVIDERS[id].label,
-        value: id,
-      })),
-    },
-  ]);
+
+  let active: ProviderId;
+  if (which.length === 1) {
+    active = which[0];
+    console.log(chalk.dim(`\n默认供应商已设为：${PROVIDERS[active].label}（仅配置一家时无需再选）`));
+  } else {
+    const ans = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'active',
+        message: '默认供应商（export / claude 省略 -p 时用，回车 = 第一项）',
+        default: which[0],
+        choices: which.map((id) => ({
+          name: PROVIDERS[id].label,
+          value: id,
+        })),
+      },
+    ]);
+    active = ans.active as ProviderId;
+  }
   cfg = { ...cfg, active_provider: active };
   saveConfig(cfg);
   console.log(chalk.green('\n初始化完成。查看: claude-helper list'));
@@ -384,7 +417,7 @@ const program = new Command();
 program
   .name('claude-helper')
   .description('Claude Helper：多供应商 API Key、网络检查与 Claude Code 配置')
-  .version('0.3.0');
+  .version('0.3.1');
 
 program
   .command('check')
