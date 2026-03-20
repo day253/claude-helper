@@ -1,11 +1,6 @@
 import chalk from 'chalk';
 import { PROVIDERS, PROVIDER_IDS, type ProviderId } from './providers.js';
-import {
-  buildClaudeEnv,
-  claudeSettingsPath,
-  effectiveClaudeBase,
-  effectiveOpenAIBase,
-} from './claude.js';
+import { buildClaudeEnv, claudeSettingsPath, effectiveClaudeBase } from './claude.js';
 import type { ConfigFile } from './store.js';
 
 const PROBE_TIMEOUT_MS = 8000;
@@ -64,18 +59,10 @@ export async function validateAfterSave(cfg: ConfigFile): Promise<void> {
     return;
   }
 
-  const openaiBase = effectiveOpenAIBase(active, entry);
   const claudeBase = effectiveClaudeBase(active, entry);
 
   let anyNetFail = false;
   const probes: Promise<void>[] = [];
-  probes.push(
-    probeUrl(openaiBase).then((r) => {
-      if (!r.ok) anyNetFail = true;
-      const mark = r.ok ? chalk.green('✓') : chalk.red('✗');
-      console.log(`${mark} OpenAI 兼容地址\n    ${openaiBase}\n    ${r.detail}`);
-    }),
-  );
 
   if (claudeBase) {
     probes.push(

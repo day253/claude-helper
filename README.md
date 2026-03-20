@@ -39,7 +39,7 @@ GitHub 旧仓库 URL 一般会重定向到新名一段时间。
 | 命令 | 说明 |
 |------|------|
 | （无子命令）或 `claude-helper init` | 向导：**先列表选唯一供应商**（回车默认智谱 glm），**再**按屏幕上的文档链接与说明填写该家 API Key，并设为默认；**结束后自动检查并提示启动 Claude** |
-| `claude-helper check` | 随时复查：已保存 Key、默认供应商、端点 HTTP 探测；并打印 **启动 Claude Code** 的步骤（与 init/set/active 保存后自动执行的内容相同） |
+| `claude-helper check` | 随时复查：已保存 Key、默认供应商、**仅 Anthropic 兼容根** HTTP 探测（OpenAI export Base 不探测）；并打印 **启动 Claude Code** 的步骤（与 init/set/active 保存后自动执行的内容相同） |
 | `claude-helper list` | 列出全部（含 OpenAI base / Claude base、密钥脱敏） |
 | `claude-helper show <provider>` | 查看单个 |
 | `claude-helper set <provider>` | 无其它参数时**交互只填 Key**；可用 `--key` / `--base` / `--anthropic-base` / `--model` / `--note`；**保存后自动检查并提示启动 Claude** |

@@ -231,7 +231,7 @@ Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无
 | 导出 | 说明 |
 |------|------|
 | `probeUrl` | `fetch` + 超时，用于判断 API 根路径是否可达（不校验厂商鉴权） |
-| `validateAfterSave` | `init` / `set` / `active` 保存后及 `check` 命令：列出已填 Key、探测默认供应商的 OpenAI/Claude 端点、`buildClaudeEnv` 试组装，并打印启动 Claude Code 的步骤 |
+| `validateAfterSave` | `init` / `set` / `active` 保存后及 `check` 命令：列出已填 Key、**仅**对默认供应商的 **Anthropic 兼容根** 做 HTTP 探测（OpenAI export Base 不探测）、`buildClaudeEnv` 试组装，并打印启动 Claude Code 的步骤 |
 
 ### 5.5 `src/cli.ts`
 
