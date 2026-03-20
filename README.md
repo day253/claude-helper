@@ -1,6 +1,6 @@
 # Claude Helper
 
-**npm 包名**：`claude-helper` · **命令**：`claude-helper`（**直接敲命令名、不加子命令**即开始配置智谱 GLM，等同 `init`）
+**npm 包名**：`claude-helper` · **命令**：`claude-helper`（**无子命令**即进入向导：先**选一家**供应商，再**按文档提示**填 API Key，等同 `init`）
 
 **技术设计（架构 / 数据流 / 决策）**：[doc/technical-guide-zh.md](doc/technical-guide-zh.md)（结构与 [openclaw-cursor-brain 技术文档](https://github.com/andeya/openclaw-cursor-brain/blob/main/doc/technical-guide-zh.md) 对齐，便于团队评审与贡献）。
 
@@ -36,7 +36,7 @@ GitHub 旧仓库 URL 一般会重定向到新名一段时间。
 
 | 命令 | 说明 |
 |------|------|
-| （无子命令）或 `claude-helper init` | 新手：**只敲 `claude-helper` 即可**，无选择，只配 **智谱 GLM** 一家 Key 并设为默认；其他家用 `set` / `active`；**结束后自动检查并提示启动 Claude** |
+| （无子命令）或 `claude-helper init` | 向导：**先列表选唯一供应商**（回车默认智谱 glm），**再**按屏幕上的文档链接与说明填写该家 API Key，并设为默认；**结束后自动检查并提示启动 Claude** |
 | `claude-helper check` | 随时复查：已保存 Key、默认供应商、端点 HTTP 探测；并打印 **启动 Claude Code** 的步骤（与 init/set/active 保存后自动执行的内容相同） |
 | `claude-helper list` | 列出全部（含 OpenAI base / Claude base、密钥脱敏） |
 | `claude-helper show <provider>` | 查看单个 |

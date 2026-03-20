@@ -299,23 +299,35 @@ function shellQuote(s: string): string {
   return `'${s.replace(/'/g, `'\\''`)}'`;
 }
 
-/** init 固定配置的供应商：智谱 GLM，Claude Code 可不经网关直接 apply */
-const INIT_PROVIDER: ProviderId = 'glm';
+/** 无参 / init 时列表默认选中的供应商（回车即可） */
+const INIT_DEFAULT_PROVIDER: ProviderId = 'glm';
 
 async function cmdInit(): Promise<void> {
   console.log(chalk.dim(`配置将写入: ${configPath()}\n`));
   console.log(
-    chalk.cyan('只做一件事：配置 ') +
-      chalk.cyan.bold(PROVIDERS[INIT_PROVIDER].label) +
-      chalk.cyan(' 的 API Key，并设为默认供应商。\n') +
-      chalk.cyan('换用 OpenRouter、Kimi 等请用：claude-helper set <供应商id> 与 claude-helper active <id>\n'),
+    chalk.cyan('两步走：① 选一家供应商 ② 按说明填写该家的 API Key（将自动设为默认供应商）。\n') +
+      chalk.dim('补配其它家可再运行本命令，或用：claude-helper set <id>\n'),
   );
 
+  const { provider } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'provider',
+      message: '第一步：选择要配置的供应商（回车 = 默认第一项）',
+      default: INIT_DEFAULT_PROVIDER,
+      choices: PROVIDER_IDS.map((id) => ({
+        name: `${PROVIDERS[id].label}（${id}）`,
+        value: id,
+      })),
+    },
+  ]);
+
+  const id = provider as ProviderId;
   let cfg = loadConfig();
-  cfg = await promptSet(INIT_PROVIDER, cfg);
-  cfg = { ...cfg, active_provider: INIT_PROVIDER };
+  cfg = await promptSet(id, cfg);
+  cfg = { ...cfg, active_provider: id };
   saveConfig(cfg);
-  console.log(chalk.green(`\n已设为默认供应商：${PROVIDERS[INIT_PROVIDER].label}。查看：claude-helper list`));
+  console.log(chalk.green(`\n已设为默认供应商：${PROVIDERS[id].label}。查看：claude-helper list`));
   await validateAfterSave(loadConfig());
 }
 
@@ -323,7 +335,7 @@ const program = new Command();
 program
   .name('claude-helper')
   .description('Claude Helper：多供应商 API Key、网络检查与 Claude Code 配置')
-  .version('0.3.4');
+  .version('0.3.5');
 
 program
   .command('check')
@@ -449,7 +461,7 @@ claudeCmd
 
 program
   .command('init')
-  .description('同默认行为：只配智谱 GLM（可直接运行 claude-helper 不带任何参数）')
+  .description('向导：先选一家供应商，再配置其 API Key（与直接运行 claude-helper 无参相同）')
   .action(() => cmdInit().catch(fatal));
 
 function fatal(e: unknown): void {

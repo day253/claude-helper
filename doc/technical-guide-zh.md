@@ -114,7 +114,7 @@ flowchart TB
 
 ### 3.1 配置写入（init / set）
 
-无子命令运行 `claude-helper` 与 `claude-helper init` 相同：**无任何列表选择**，固定 **glm**，`promptSet` 后 `active_provider = glm`。其他供应商用 `set` / `active`。
+无子命令运行 `claude-helper` 与 `claude-helper init` 相同：**第一步 `list` 选唯一供应商**（默认高亮 `glm`），**第二步** `promptSet`（打印该家 `docs` + `keyHelp` 后输入 Key），`active_provider` 设为所选 id。
 
 ```mermaid
 sequenceDiagram
@@ -124,7 +124,7 @@ sequenceDiagram
   participant ST as store.ts
   participant FS as 文件系统
   U->>CLI: 无参数 / init，或 set（无 flag）
-  CLI->>U: 默认 init：仅 glm，无列表
+  CLI->>U: init：list 选一家 → promptSet(Key)
   CLI->>P: 读取 ProviderMeta
   CLI->>U: 打印 keyHelp + docs
   CLI->>U: inquirer 密码输入
