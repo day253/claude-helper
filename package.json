@@ -2,6 +2,14 @@
   "name": "claude-helper",
   "version": "0.3.0",
   "description": "Claude Helper：多供应商 API Key 向导、检查与写入 Claude Code settings.json",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/day253/claude-helper.git"
+  },
+  "bugs": {
+    "url": "https://github.com/day253/claude-helper/issues"
+  },
+  "homepage": "https://github.com/day253/claude-helper#readme",
   "type": "module",
   "bin": {
     "claude-helper": "dist/cli.js"

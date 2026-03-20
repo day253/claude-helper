@@ -21,7 +21,7 @@
 
 ### 1.1 一句话定义
 
-**Claude Helper**（npm 包名 `claude-helper`，命令 `claude-helper`）是一个 Node.js CLI，在本地集中保存多家 LLM 供应商的 **API Key** 与可选 **Base URL**，并支持：
+**Claude Helper**（npm 包名 `claude-helper`，命令 `claude-helper`，源码仓库 [github.com/day253/claude-helper](https://github.com/day253/claude-helper)）是一个 Node.js CLI，在本地集中保存多家 LLM 供应商的 **API Key** 与可选 **Base URL**，并支持：
 
 - 向 **OpenAI 兼容** 客户端导出 `OPENAI_*` 环境变量；
 - 向 **Claude Code** 导出或合并 `ANTHROPIC_*` 到 `~/.claude/settings.json` 的 `env`。

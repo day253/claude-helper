@@ -19,7 +19,7 @@ npm run build
 npm link             # 可选，全局可用 claude-helper
 ```
 
-从旧版迁移：若曾全局链接过 `llm-providers-config` / 命令 `llm-config`，请先执行 `npm unlink -g llm-providers-config`，再在本仓库目录 `npm link`（得到 `claude-helper`）。
+从旧版迁移：若曾全局链接过旧包名 `llm-providers-config` / 命令 `llm-config`，请先执行 `npm unlink -g llm-providers-config`，再在本仓库目录 `npm link`（得到 `claude-helper`）。GitHub 若仍用旧仓库 URL，Git 会自动重定向到新名一段时间。
 
 开发调试：
 
@@ -106,7 +106,7 @@ claude-helper claude apply
 
 ## 发布到 GitHub（例如账号或组织 `day253`）
 
-本仓库已初始化 Git，默认远程为：`https://github.com/day253/llm-providers-config.git`（若你的用户名/组织名不同，请改 `git remote set-url`）。
+本仓库默认远程为：`https://github.com/day253/claude-helper.git`（若你的用户名/组织名不同，请改 `git remote set-url`）。
 
 ### 方式 A：`gh`（已安装 Homebrew 版）
 
@@ -119,21 +119,21 @@ gh auth login
 在 GitHub 上创建空仓库（与下面 `origin` 路径一致），然后推送：
 
 ```bash
-cd ~/llm-providers-config
-gh repo create day253/llm-providers-config --public --description "Claude Helper：多供应商 API Key 与 Claude Code 配置"
+cd ~/claude-helper
+gh repo create day253/claude-helper --public --description "Claude Helper：多供应商 API Key 与 Claude Code 配置"
 git push -u origin main
 ```
 
-（把 `day253/llm-providers-config` 换成你的 `用户名或组织名/仓库名`；若本地还没有 `origin`，先执行  
-`git remote add origin https://github.com/day253/llm-providers-config.git`。）
+（把 `day253/claude-helper` 换成你的 `用户名或组织名/仓库名`；若本地还没有 `origin`，先执行  
+`git remote add origin https://github.com/day253/claude-helper.git`。）
 
 ### 方式 B：网页新建空仓库
 
-1. 打开 [GitHub New repository](https://github.com/new)，Owner 选 `day253`，仓库名 `llm-providers-config`，**不要**勾选初始化 README。
+1. 打开 [GitHub New repository](https://github.com/new)，Owner 选 `day253`，仓库名 `claude-helper`，**不要**勾选初始化 README。
 2. 本地执行：
 
 ```bash
-cd ~/llm-providers-config
-git remote set-url origin https://github.com/day253/llm-providers-config.git
+cd ~/claude-helper
+git remote set-url origin https://github.com/day253/claude-helper.git
 git push -u origin main
 ```
