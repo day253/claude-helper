@@ -47,3 +47,37 @@ eval "$(llm-config export -p openrouter)"
 - **openrouter**: `https://openrouter.ai/api/v1`
 
 若某家 API 改版，请自行用 `llm-config set <p> --base <url>` 覆盖。
+
+## 发布到 GitHub（例如账号或组织 `day253`）
+
+本仓库已初始化 Git，默认远程为：`https://github.com/day253/llm-providers-config.git`（若你的用户名/组织名不同，请改 `git remote set-url`）。
+
+### 方式 A：`gh`（已安装 Homebrew 版）
+
+在终端登录（需浏览器或 Token 一次）：
+
+```bash
+gh auth login
+```
+
+在 GitHub 上创建空仓库（与下面 `origin` 路径一致），然后推送：
+
+```bash
+cd ~/llm-providers-config
+gh repo create day253/llm-providers-config --public --description "多供应商 LLM API 本地配置 CLI"
+git push -u origin main
+```
+
+（把 `day253/llm-providers-config` 换成你的 `用户名或组织名/仓库名`；若本地还没有 `origin`，先执行  
+`git remote add origin https://github.com/day253/llm-providers-config.git`。）
+
+### 方式 B：网页新建空仓库
+
+1. 打开 [GitHub New repository](https://github.com/new)，Owner 选 `day253`，仓库名 `llm-providers-config`，**不要**勾选初始化 README。
+2. 本地执行：
+
+```bash
+cd ~/llm-providers-config
+git remote set-url origin https://github.com/day253/llm-providers-config.git
+git push -u origin main
+```
