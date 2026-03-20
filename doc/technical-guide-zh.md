@@ -124,7 +124,7 @@ sequenceDiagram
   participant ST as store.ts
   participant FS as 文件系统
   U->>CLI: init 或 set（无 flag）
-  CLI->>U: init：list 预设（回车默认）
+  CLI->>U: init：仅 glm，无列表
   CLI->>P: 读取 ProviderMeta
   CLI->>U: 打印 keyHelp + docs
   CLI->>U: inquirer 密码输入
