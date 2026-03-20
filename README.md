@@ -26,7 +26,7 @@ npm link   # 可选，全局可用 llm-config
 
 | 命令 | 说明 |
 |------|------|
-| `llm-config init` | 向导：勾选供应商，**逐项只问 API Key**（前先显示文档链接与申请说明） |
+| `llm-config init` | 新手向导：**第一步直接回车**即选「推荐」；再逐项只问 API Key（可先显示文档链接），不需要的 Key 回车跳过 |
 | `llm-config list` | 列出全部（含 OpenAI base / Claude base、密钥脱敏） |
 | `llm-config show <provider>` | 查看单个 |
 | `llm-config set <provider>` | 无其它参数时**交互只填 Key**；可用 `--key` / `--base` / `--anthropic-base` / `--model` / `--note` |

@@ -295,35 +295,79 @@ function shellQuote(s: string): string {
   return `'${s.replace(/'/g, `'\\''`)}'`;
 }
 
+/** 对 Claude Code 可不经 LiteLLM 直接 apply 的供应商（与 providers 元数据一致） */
+const CLAUDE_READY_IDS: ProviderId[] = PROVIDER_IDS.filter(
+  (id) => Boolean(PROVIDERS[id].claudeAnthropicBaseUrl),
+);
+
 async function cmdInit(): Promise<void> {
   console.log(chalk.dim(`配置将写入: ${configPath()}\n`));
-  const { which } = await inquirer.prompt([
+  console.log(
+    chalk.cyan('新手模式：下面每一步都可以直接按「回车」选默认；不必像高手工具那样记命令。\n'),
+  );
+
+  const { preset } = await inquirer.prompt([
     {
-      type: 'checkbox',
-      name: 'which',
-      message: '要配置哪些供应商？',
-      choices: PROVIDER_IDS.map((id) => ({ name: `${PROVIDERS[id].label} (${id})`, value: id })),
+      type: 'list',
+      name: 'preset',
+      message: '第一步：要选哪些供应商？（回车 = 第一项推荐）',
+      default: 'all',
+      choices: [
+        {
+          name: `推荐：全部列一遍（${PROVIDER_IDS.length} 家），没有账号的 Key 直接回车跳过即可`,
+          value: 'all' as const,
+        },
+        {
+          name: `省事：只配置 Claude Code 能一键写入的（${CLAUDE_READY_IDS.map((i) => PROVIDERS[i].label).join('、')}）`,
+          value: 'claude_ready' as const,
+        },
+        {
+          name: '自定义：用手动勾选（空格选中，回车确认）',
+          value: 'custom' as const,
+        },
+      ],
     },
   ]);
+
+  let which: ProviderId[];
+  if (preset === 'all') {
+    which = [...PROVIDER_IDS];
+  } else if (preset === 'claude_ready') {
+    which = [...CLAUDE_READY_IDS];
+  } else {
+    const { picked } = await inquirer.prompt([
+      {
+        type: 'checkbox',
+        name: 'picked',
+        message: '请勾选供应商（空格切换选中，回车确认）：',
+        choices: PROVIDER_IDS.map((id) => ({
+          name: `${PROVIDERS[id].label} (${id})`,
+          value: id,
+        })),
+      },
+    ]);
+    which = picked as ProviderId[];
+  }
+
   if (!which.length) {
     console.log(chalk.yellow('未选择任何项'));
     return;
   }
   let cfg = loadConfig();
-  for (const id of which as ProviderId[]) {
+  console.log(chalk.dim('\n接下来逐个询问 API Key；不需要的供应商在密码行直接回车跳过即可。\n'));
+  for (const id of which) {
     cfg = await promptSet(id, cfg);
   }
   const { active } = await inquirer.prompt([
     {
       type: 'list',
       name: 'active',
-      message: '默认供应商（用于 export / claude 省略 -p）',
-      choices: [
-        ...((which as ProviderId[]).map((id) => ({
-          name: PROVIDERS[id].label,
-          value: id,
-        })) as { name: string; value: ProviderId }[]),
-      ],
+      message: '默认供应商（export / claude 省略 -p 时用，回车 = 第一项）',
+      default: which[0],
+      choices: which.map((id) => ({
+        name: PROVIDERS[id].label,
+        value: id,
+      })),
     },
   ]);
   cfg = { ...cfg, active_provider: active };
@@ -336,7 +380,7 @@ const program = new Command();
 program
   .name('llm-config')
   .description('多供应商 LLM API Key 本地配置，并导出给 OpenAI 客户端或 Claude Code')
-  .version('0.2.0');
+  .version('0.2.1');
 
 program
   .command('list')
@@ -455,7 +499,10 @@ claudeCmd
     cmdClaudeApply(pid as ProviderId | undefined);
   });
 
-program.command('init').description('向导：勾选供应商并仅填写各 API Key').action(() => cmdInit().catch(fatal));
+program
+  .command('init')
+  .description('新手向导：第一步回车选推荐范围，再逐项填 Key（可跳过）')
+  .action(() => cmdInit().catch(fatal));
 
 function fatal(e: unknown): void {
   console.error(e instanceof Error ? e.message : e);

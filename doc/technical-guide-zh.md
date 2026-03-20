@@ -109,6 +109,8 @@ flowchart TB
 
 ### 3.1 配置写入（init / set）
 
+`init` 第一步为 **list**（非 checkbox）：默认高亮「推荐：全部供应商」，**直接回车**即可；可选「仅 Claude 可一键 apply 的子集」或「自定义勾选」。面向新手，避免未按空格导致零选项退出。
+
 ```mermaid
 sequenceDiagram
   participant U as 用户
@@ -117,6 +119,7 @@ sequenceDiagram
   participant ST as store.ts
   participant FS as 文件系统
   U->>CLI: init 或 set（无 flag）
+  CLI->>U: init：list 预设（回车默认）
   CLI->>P: 读取 ProviderMeta
   CLI->>U: 打印 keyHelp + docs
   CLI->>U: inquirer 密码输入
