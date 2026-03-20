@@ -8,6 +8,8 @@ export interface ProviderEntry {
   api_key?: string;
   /** 覆盖默认 base URL */
   base_url?: string;
+  /** Claude Code 用：Anthropic 兼容网关根 URL（优先于供应商内置 claudeAnthropicBaseUrl） */
+  anthropic_base_url?: string;
   /** 默认模型 ID（可选） */
   default_model?: string;
   /** 任意备注 */
