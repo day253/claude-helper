@@ -1,6 +1,6 @@
 {
   "name": "claude-helper",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Claude Helper：多供应商 API Key 向导、检查与写入 Claude Code settings.json",
   "repository": {
     "type": "git",

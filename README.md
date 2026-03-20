@@ -10,7 +10,7 @@
 
 配置文件：`~/.llm-providers/config.yaml`
 
-**0.6.0 起**内置 **14 家**供应商（均有厂商文档给出的 **Anthropic 兼容** Claude Code 根 URL）：`byteplus`、`dashscope`、`dashscope_intl`、`deepseek`、`fireworks`、`glm`、`minimax`、`modelstudio_intl`、`moonshot`、`novita`、`openrouter`、`siliconflow`、`volcengine`、`zai`。完整链接与套餐说明见 [doc/vendor-docs-zh.md](doc/vendor-docs-zh.md)；`claude apply` 前请对照文档核对 **Coding Plan / 按量 / 区域**（阿里云国内与国际拆成多个 id，勿混用）。未知 id 会在读取 YAML 时忽略；无效 `active_provider` 会清空。
+**0.6.1**：无参 / `init` 为**循环主菜单向导**（参考官方 `npx @z_ai/coding-helper` 的分层与提示习惯：横幅、全局配置警告、`claude apply` 二次确认、下一步菜单）。**0.6.0 起**内置 **14 家**供应商（均有厂商文档给出的 **Anthropic 兼容** Claude Code 根 URL）：`byteplus`、`dashscope`、`dashscope_intl`、`deepseek`、`fireworks`、`glm`、`minimax`、`modelstudio_intl`、`moonshot`、`novita`、`openrouter`、`siliconflow`、`volcengine`、`zai`。完整链接见 [doc/vendor-docs-zh.md](doc/vendor-docs-zh.md)。未知 id 会在读取 YAML 时忽略；无效 `active_provider` 会清空。
 
 ## 安装
 
@@ -38,7 +38,7 @@ GitHub 旧仓库 URL 一般会重定向到新名一段时间。
 
 | 命令 | 说明 |
 |------|------|
-| （无子命令）或 `claude-helper init` | 向导：**先列表选唯一供应商**（回车默认智谱 glm），**再**按屏幕上的文档链接与说明填写该家 API Key，并设为默认；**结束后自动检查并提示启动 Claude** |
+| （无子命令）或 `claude-helper init` | **主菜单向导**（风格参考官方 coding-helper）：配置 Key / 写入 Claude Code / 检查 / 退出；配置路径内含供应商列表、同步摘要、`claude apply` 确认与启动提示 |
 | `claude-helper check` | 随时复查：已保存 Key、默认供应商、**仅 Anthropic 兼容根** HTTP 探测（OpenAI export Base 不探测）；并打印 **启动 Claude Code** 的步骤（与 init/set/active 保存后自动执行的内容相同） |
 | `claude-helper list` | 列出全部（含 OpenAI base / Claude base、密钥脱敏） |
 | `claude-helper show <provider>` | 查看单个 |

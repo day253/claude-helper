@@ -26,6 +26,15 @@ import {
   type ConfigFile,
   type ProviderEntry,
 } from './store.js';
+import {
+  printClaudeGlobalWarning,
+  printConfigSyncSummary,
+  printNavHint,
+  printOfficialHelperHint,
+  printSection,
+  printWizardBanner,
+} from './ui.js';
+import { PKG_VERSION } from './version.js';
 
 const PROVIDER_ARG = PROVIDER_IDS.join(' | ');
 
@@ -75,10 +84,11 @@ async function cmdShow(id: ProviderId): Promise<void> {
   console.log(`  note:                ${e?.note ?? ''}`);
 }
 
-async function promptSet(id: ProviderId, cfg: ConfigFile): Promise<ConfigFile> {
+async function promptSet(id: ProviderId, cfg: ConfigFile, stepTitle?: string): Promise<ConfigFile> {
   const meta = PROVIDERS[id];
   const cur = cfg.providers[id] ?? {};
-  console.log(chalk.cyan.bold(`\n${meta.label}`));
+  if (stepTitle) printSection(stepTitle);
+  console.log(chalk.cyan.bold(meta.label));
   console.log(chalk.cyan(meta.keyHelp));
   if (meta.docs) console.log(chalk.cyan(`文档: ${meta.docs}`));
   const answers = await inquirer.prompt([
@@ -120,7 +130,7 @@ async function cmdSet(
     opts.anthropicBase !== undefined;
 
   if (opts.interactive || !hasCliField) {
-    cfg = await promptSet(id, cfg);
+    cfg = await promptSet(id, cfg, undefined);
   } else {
     const next: ProviderEntry = {
       ...cur,
@@ -304,40 +314,190 @@ function shellQuote(s: string): string {
 /** 无参 / init 时列表默认选中的供应商（回车即可） */
 const INIT_DEFAULT_PROVIDER: ProviderId = 'glm';
 
-async function cmdInit(): Promise<void> {
-  console.log(chalk.dim(`配置将写入: ${configPath()}\n`));
+function printClaudeStartHint(): void {
   console.log(
-    chalk.cyan('两步走：① 选一家供应商 ② 按说明填写该家的 API Key（将自动设为默认供应商）。\n') +
-      chalk.dim('补配其它家可再运行本命令，或用：claude-helper set <id>\n'),
+    chalk.cyan(
+      '\n启动 Claude Code：在**项目目录**新开终端，执行：\n' +
+        `  ${chalk.bold('claude')}\n` +
+        '若尚未安装 CLI：npm install -g @anthropic-ai/claude-code\n',
+    ),
   );
+}
+
+async function wizardConfigureFlow(): Promise<void> {
+  console.log(chalk.dim(`\n配置将写入: ${configPath()}`));
+  printNavHint();
 
   const { provider } = await inquirer.prompt([
     {
       type: 'list',
       name: 'provider',
-      message: '第一步：选择要配置的供应商（回车 = 默认第一项）',
+      message: '选择要配置的供应商',
       default: INIT_DEFAULT_PROVIDER,
-      choices: PROVIDER_IDS_WIZARD.map((id) => ({
-        name: `${PROVIDERS[id].label}（${id}）`,
-        value: id,
-      })),
+      pageSize: 18,
+      choices: [
+        ...PROVIDER_IDS_WIZARD.map((id) => ({
+          name: `>  ${PROVIDERS[id].label}（${id}）`,
+          value: id,
+        })),
+        new inquirer.Separator(' ────────────── '),
+        { name: '<  返回主菜单', value: '__back' as const },
+      ],
     },
   ]);
 
+  if (provider === '__back') return;
+
   const id = provider as ProviderId;
   let cfg = loadConfig();
-  cfg = await promptSet(id, cfg);
+  cfg = await promptSet(id, cfg, '填写 API Key');
   cfg = { ...cfg, active_provider: id };
   saveConfig(cfg);
-  console.log(chalk.green(`\n已设为默认供应商：${PROVIDERS[id].label}。查看：claude-helper list`));
+
+  const entry = cfg.providers[id]!;
+  const claudeBase = effectiveClaudeBase(id, entry) ?? '(未解析)';
+  printConfigSyncSummary({
+    providerLabel: PROVIDERS[id].label,
+    providerId: id,
+    keyMasked: maskKey(entry.api_key),
+    claudeBase,
+  });
+
   await validateAfterSave(loadConfig());
+
+  for (;;) {
+    printNavHint();
+    const { step } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'step',
+        message: '下一步',
+        choices: [
+          { name: '>  立即写入 Claude Code（merge ~/.claude/settings.json）', value: 'apply' },
+          { name: '>  查看如何启动 claude', value: 'hint' },
+          new inquirer.Separator(' ────────────── '),
+          { name: '<  返回主菜单', value: 'menu' },
+        ],
+      },
+    ]);
+
+    if (step === 'menu') break;
+    if (step === 'hint') {
+      printClaudeStartHint();
+      continue;
+    }
+    if (step === 'apply') {
+      if (!effectiveClaudeBase(id, entry)) {
+        printMissingClaudeBase(id);
+        continue;
+      }
+      printClaudeGlobalWarning();
+      const { ok } = await inquirer.prompt<{ ok: boolean }>([
+        {
+          type: 'confirm',
+          name: 'ok',
+          message: '确认合并 env 到 Claude Code 用户配置？',
+          default: true,
+        },
+      ]);
+      if (!ok) {
+        console.log(chalk.dim('已取消。'));
+        continue;
+      }
+      cmdClaudeApply(id);
+      console.log(chalk.green('\n✅ 已与 Claude Code 用户配置同步'));
+      printClaudeStartHint();
+      break;
+    }
+  }
+}
+
+/** 无参 / init：交互主菜单（风格参考 @z_ai/coding-helper） */
+async function runSetupWizard(): Promise<void> {
+  for (;;) {
+    console.log();
+    printWizardBanner('Claude Helper', 'Setup Wizard · Key 与 Claude Code');
+    printOfficialHelperHint();
+    printNavHint();
+
+    const { action } = await inquirer.prompt<{ action: 'configure' | 'apply' | 'check' | 'exit' }>([
+      {
+        type: 'list',
+        name: 'action',
+        message: '选择操作',
+        pageSize: 12,
+        choices: [
+          { name: '>  配置 / 更新 API Key，并设为默认供应商', value: 'configure' },
+          { name: '>  将默认供应商写入 Claude Code（~/.claude/settings.json）', value: 'apply' },
+          { name: '>  仅运行检查（Anthropic 根探测等）', value: 'check' },
+          new inquirer.Separator(' ────────────── '),
+          { name: 'x  退出', value: 'exit' },
+        ],
+      },
+    ]);
+
+    if (action === 'exit') {
+      console.log(chalk.dim('\n再见。\n'));
+      return;
+    }
+
+    if (action === 'check') {
+      await validateAfterSave(loadConfig());
+      printNavHint();
+      const { back } = await inquirer.prompt<{ back: boolean }>([
+        {
+          type: 'confirm',
+          name: 'back',
+          message: '返回主菜单？',
+          default: true,
+        },
+      ]);
+      if (!back) {
+        console.log(chalk.dim('\n再见。\n'));
+        return;
+      }
+      continue;
+    }
+
+    if (action === 'apply') {
+      const cfg = loadConfig();
+      const id = cfg.active_provider;
+      if (!id || !cfg.providers[id]?.api_key?.trim()) {
+        console.log(chalk.yellow('\n尚未设置默认供应商或缺少 API Key。请先选「配置 / 更新 API Key」。\n'));
+        continue;
+      }
+      printClaudeGlobalWarning();
+      const { ok } = await inquirer.prompt<{ ok: boolean }>([
+        {
+          type: 'confirm',
+          name: 'ok',
+          message: '确认合并 env 到 Claude Code 用户配置？',
+          default: true,
+        },
+      ]);
+      if (!ok) {
+        console.log(chalk.dim('已取消。\n'));
+        continue;
+      }
+      cmdClaudeApply(undefined);
+      console.log(chalk.green('\n✅ 已与 Claude Code 用户配置同步'));
+      printClaudeStartHint();
+      continue;
+    }
+
+    await wizardConfigureFlow();
+  }
+}
+
+async function cmdInit(): Promise<void> {
+  await runSetupWizard();
 }
 
 const program = new Command();
 program
   .name('claude-helper')
   .description('Claude Helper：多供应商 API Key、网络检查与 Claude Code 配置')
-  .version('0.4.0');
+  .version(PKG_VERSION);
 
 program
   .command('check')
@@ -463,7 +623,7 @@ claudeCmd
 
 program
   .command('init')
-  .description('向导：先选一家供应商，再配置其 API Key（与直接运行 claude-helper 无参相同）')
+  .description('交互主菜单：配置 Key / 写入 Claude Code / 检查（与无参运行 claude-helper 相同）')
   .action(() => cmdInit().catch(fatal));
 
 function fatal(e: unknown): void {
@@ -497,7 +657,7 @@ function shouldRunDefaultInit(): boolean {
 }
 
 if (shouldRunDefaultInit()) {
-  cmdInit().catch(fatal);
+  runSetupWizard().catch(fatal);
 } else {
   program.parse(process.argv);
 }

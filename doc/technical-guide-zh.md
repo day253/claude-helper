@@ -61,7 +61,9 @@ claude-helper/   # 仓库目录名可与包名不同
 │   ├── technical-guide-zh.md # 本文档
 │   └── vendor-docs-zh.md     # 厂商官方文档索引（Claude Code / 套餐）
 ├── src/
-│   ├── cli.ts                # 命令注册与业务编排
+│   ├── cli.ts                # 命令注册与业务编排、runSetupWizard
+│   ├── ui.ts                 # 向导横幅、警告、摘要（对齐 coding-helper 式引导）
+│   ├── version.ts            # package.json 版本（commander -V）
 │   ├── providers.ts          # 供应商元数据与 ProviderId
 │   ├── store.ts              # YAML 读写、脱敏
 │   ├── claude.ts             # settings.json 合并、ANTHROPIC_*、effectiveOpenAIBase
@@ -236,8 +238,19 @@ Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无
 ### 5.5 `src/cli.ts`
 
 - 使用 Commander 注册：`list`、`show`、`set`、`unset`、`active`、`export`、`check`、`init`、`claude export`、`claude apply`。
+- 无参 / `init`：`runSetupWizard()` **循环主菜单**（参考 `@z_ai/coding-helper` 的层级与文案习惯）：配置 Key、仅 apply、仅 check、退出；写入 `~/.claude/settings.json` 前有 **Warning + confirm**；`src/ui.ts` 负责横幅、分区标题、导航提示。
 - `resolveProvider`：`--provider` / `-p` 优先，否则 `active_provider`。
 - `fatal`：统一 `process.exit(1)`。
+- `version.ts`：从 `package.json` 读取版本供 `commander -V` 使用。
+
+### 5.6 `src/ui.ts`
+
+| 导出 | 说明 |
+|------|------|
+| `printWizardBanner` | 顶部双线框标题 |
+| `printClaudeGlobalWarning` | 修改用户级 Claude 配置的黄色警告 |
+| `printConfigSyncSummary` | 保存 Key 后的「配置摘要」（脱敏、Anthropic 根） |
+| `printNavHint` / `printOfficialHelperHint` | 键位说明与官方 coding-helper 分流提示 |
 
 ---
 
