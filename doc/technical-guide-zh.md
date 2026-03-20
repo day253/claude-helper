@@ -114,7 +114,7 @@ flowchart TB
 
 ### 3.1 配置写入（init / set）
 
-`init` **无任何列表选择**：固定为智谱 **glm** 一家，仅 `promptSet` 询问 API Key，并自动 `active_provider = glm`。其他供应商用 `set` / `active`。
+无子命令运行 `claude-helper` 与 `claude-helper init` 相同：**无任何列表选择**，固定 **glm**，`promptSet` 后 `active_provider = glm`。其他供应商用 `set` / `active`。
 
 ```mermaid
 sequenceDiagram

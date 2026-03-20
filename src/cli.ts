@@ -323,7 +323,7 @@ const program = new Command();
 program
   .name('claude-helper')
   .description('Claude Helper：多供应商 API Key、网络检查与 Claude Code 配置')
-  .version('0.3.2');
+  .version('0.3.3');
 
 program
   .command('check')
@@ -449,7 +449,7 @@ claudeCmd
 
 program
   .command('init')
-  .description('新手：只配智谱 GLM 一家 Key 并设为默认（无选项）')
+  .description('同默认行为：只配智谱 GLM（可直接运行 claude-helper 不带任何参数）')
   .action(() => cmdInit().catch(fatal));
 
 function fatal(e: unknown): void {
@@ -457,4 +457,33 @@ function fatal(e: unknown): void {
   process.exit(1);
 }
 
-program.parse();
+const argvRest = process.argv.slice(2);
+const topLevelCommands = new Set([
+  'check',
+  'list',
+  'show',
+  'set',
+  'unset',
+  'active',
+  'export',
+  'init',
+  'claude',
+  'help',
+]);
+/** 无子命令：直接 `claude-helper`；开发时 `tsx src/cli.ts` 仅多一个脚本路径 */
+function shouldRunDefaultInit(): boolean {
+  if (argvRest.length === 0) return true;
+  if (argvRest.length === 1) {
+    const x = argvRest[0];
+    if (x.startsWith('-')) return false;
+    if (topLevelCommands.has(x)) return false;
+    return true;
+  }
+  return false;
+}
+
+if (shouldRunDefaultInit()) {
+  cmdInit().catch(fatal);
+} else {
+  program.parse(process.argv);
+}
