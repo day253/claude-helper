@@ -10,7 +10,7 @@
 
 配置文件：`~/.llm-providers/config.yaml`
 
-**0.6.1**：无参 / `init` 为**循环主菜单向导**（参考官方 `npx @z_ai/coding-helper` 的分层与提示习惯：横幅、全局配置警告、`claude apply` 二次确认、下一步菜单）。**0.6.0 起**内置 **14 家**供应商（均有厂商文档给出的 **Anthropic 兼容** Claude Code 根 URL）：`byteplus`、`dashscope`、`dashscope_intl`、`deepseek`、`fireworks`、`glm`、`minimax`、`modelstudio_intl`、`moonshot`、`novita`、`openrouter`、`siliconflow`、`volcengine`、`zai`。完整链接见 [doc/vendor-docs-zh.md](doc/vendor-docs-zh.md)。未知 id 会在读取 YAML 时忽略；无效 `active_provider` 会清空。
+**0.6.2**：向导强化**可读性**（开场说明、当前配置一览、①②③ 步骤编号、检查/同步后的「接下来」列表）。**0.6.0 起**内置 **14 家**供应商（均有厂商文档给出的 **Anthropic 兼容** Claude Code 根 URL）：`byteplus`、`dashscope`、`dashscope_intl`、`deepseek`、`fireworks`、`glm`、`minimax`、`modelstudio_intl`、`moonshot`、`novita`、`openrouter`、`siliconflow`、`volcengine`、`zai`。完整链接见 [doc/vendor-docs-zh.md](doc/vendor-docs-zh.md)。未知 id 会在读取 YAML 时忽略；无效 `active_provider` 会清空。
 
 ## 安装
 

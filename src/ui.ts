@@ -7,7 +7,7 @@ function padLine(s: string): string {
   return `║ ${t.padEnd(INNER)} ║`;
 }
 
-/** 顶部大标题（风格接近 coding-helper 的 box） */
+/** 顶部大标题（对齐 coding-helper 的 box） */
 export function printWizardBanner(title: string, subtitle?: string): void {
   const top = `╔${'═'.repeat(INNER + 2)}╗`;
   const bot = `╚${'═'.repeat(INNER + 2)}╝`;
@@ -17,30 +17,54 @@ export function printWizardBanner(title: string, subtitle?: string): void {
   console.log(chalk.cyan(bot));
 }
 
+/** 开场说明：先讲清「能做什么 / 不能做什么」，降低心智负担 */
+export function printWizardIntro(): void {
+  console.log(chalk.bold('\n本向导会帮你'));
+  console.log('  · 把 API Key 存在本机（~/.llm-providers/config.yaml）');
+  console.log('  · 可选：把当前默认厂家**同步进** Claude Code（~/.claude/settings.json）');
+  console.log(chalk.bold('\n和官方「一键安装助手」的区别'));
+  console.log(
+    '  · 官方 ' +
+      chalk.cyan('npx @z_ai/coding-helper') +
+      '：装 CLI、多工具（OpenCode / Crush…）、MCP、插件市场等',
+  );
+  console.log('  · 本工具：只做 **Key + 检查 + 同步 Claude Code**，更轻、步骤更少');
+}
+
+export interface WizardStatusSummary {
+  activeId: string | null;
+  activeLabel: string | null;
+  keyMasked: string;
+}
+
+/** 主菜单前展示「当前配置」，与 coding-helper 的 Configuration 区块同理 */
+export function printWizardStatus(s: WizardStatusSummary): void {
+  console.log(chalk.bold('\n当前配置'));
+  if (s.activeId && s.activeLabel) {
+    console.log(`  默认供应商：${s.activeLabel}（${chalk.cyan(s.activeId)}）`);
+  } else {
+    console.log(`  默认供应商：${chalk.yellow('尚未选择')}（建议先执行「配置 API Key」）`);
+  }
+  console.log(`  API Key：${s.keyMasked}`);
+  console.log(chalk.dim('  └ 未执行「同步」时，Claude Code 可能仍用旧 settings 或环境变量'));
+}
+
 export function printSection(title: string): void {
   console.log(chalk.bold(`\n── ${title} ──`));
 }
 
-export function printNavHint(): void {
-  console.log(chalk.dim('\n💡 ↑↓ 移动光标 | Enter 确认\n'));
+/** 统一操作说明，避免每屏重复多段提示 */
+export function printOperationHint(): void {
+  console.log(chalk.dim('\n操作：↑↓ 移动高亮  ·  Enter 确认\n'));
 }
 
-/** 与写入 ~/.claude/settings.json 相关的全局提示 */
 export function printClaudeGlobalWarning(): void {
   console.log(
     chalk.yellow(
-      '⚠️  Warning: 以下操作会修改 Claude Code 的**用户级**配置（通常即 ~/.claude/settings.json），对所有工作区生效。',
+      '⚠️  注意：即将修改 Claude Code 的**用户级**配置（~/.claude/settings.json），**所有文件夹**里的 Claude 都会受影响。',
     ),
   );
-  console.log(chalk.dim('   写入前会自动备份已有 settings.json。\n'));
-}
-
-export function printOfficialHelperHint(): void {
-  console.log(
-    chalk.dim(
-      '提示：若需安装 CLI、多编码工具（OpenCode / Crush 等）、MCP、插件市场，请使用官方：npx @z_ai/coding-helper\n',
-    ),
-  );
+  console.log(chalk.dim('   已有文件会先自动备份为 settings.json.bak.<时间戳>\n'));
 }
 
 export function printConfigSyncSummary(params: {
@@ -50,10 +74,23 @@ export function printConfigSyncSummary(params: {
   claudeBase: string;
 }): void {
   const { providerLabel, providerId, keyMasked, claudeBase } = params;
-  console.log(chalk.bold('\nClaude Helper 配置:'));
-  console.log(`  默认供应商: ${providerLabel} (${providerId})`);
-  console.log(`  API Key: ${keyMasked}`);
-  console.log(chalk.bold('\nClaude Code（将写入的 Anthropic 根）:'));
-  console.log(`  ${claudeBase}`);
-  console.log(chalk.green('\n✅ 本地 YAML 已保存；若尚未执行 apply，Claude Code 仍使用旧 settings.json 或环境变量。'));
+  console.log(chalk.bold('\n┌ Claude Helper（本地已保存）'));
+  console.log(`│  厂家：${providerLabel}（${providerId}）`);
+  console.log(`│  Key： ${keyMasked}`);
+  console.log(chalk.bold('└ Claude Code（下次「同步」时将写入）'));
+  console.log(`   Anthropic 根：${claudeBase}`);
+  console.log(
+    chalk.green(
+      '\n✅ 已写入本地。若要让终端里的 claude 用上这家，请在下一步选「同步到 Claude Code」。',
+    ),
+  );
+}
+
+export function printClaudeDoneHint(): void {
+  console.log(
+    chalk.cyan.bold('\n接下来在终端里'),
+    chalk.dim('（建议在项目根目录新开一个终端）\n'),
+  );
+  console.log(`  ${chalk.bold('claude')}`, chalk.dim('  ← 启动 Claude Code'));
+  console.log(chalk.dim('  若提示未安装：npm install -g @anthropic-ai/claude-code\n'));
 }

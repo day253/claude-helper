@@ -238,7 +238,7 @@ Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无
 ### 5.5 `src/cli.ts`
 
 - 使用 Commander 注册：`list`、`show`、`set`、`unset`、`active`、`export`、`check`、`init`、`claude export`、`claude apply`。
-- 无参 / `init`：`runSetupWizard()` **循环主菜单**（参考 `@z_ai/coding-helper` 的层级与文案习惯）：配置 Key、仅 apply、仅 check、退出；写入 `~/.claude/settings.json` 前有 **Warning + confirm**；`src/ui.ts` 负责横幅、分区标题、导航提示。
+- 无参 / `init`：`runSetupWizard()` **循环主菜单**（参考 `@z_ai/coding-helper`：**先说明能做什么**、**再展示当前配置**、**再给出编号选项**）；检查 / 同步后使用 **列表** 选择返回或退出；写入 `settings.json` 前 **Warning + confirm**。
 - `resolveProvider`：`--provider` / `-p` 优先，否则 `active_provider`。
 - `fatal`：统一 `process.exit(1)`。
 - `version.ts`：从 `package.json` 读取版本供 `commander -V` 使用。
@@ -248,9 +248,12 @@ Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无
 | 导出 | 说明 |
 |------|------|
 | `printWizardBanner` | 顶部双线框标题 |
-| `printClaudeGlobalWarning` | 修改用户级 Claude 配置的黄色警告 |
-| `printConfigSyncSummary` | 保存 Key 后的「配置摘要」（脱敏、Anthropic 根） |
-| `printNavHint` / `printOfficialHelperHint` | 键位说明与官方 coding-helper 分流提示 |
+| `printWizardIntro` | 开场：本向导做什么 vs 官方 `coding-helper` |
+| `printWizardStatus` | 主菜单前「当前配置」（默认厂家、Key 脱敏） |
+| `printOperationHint` | 统一 ↑↓ / Enter 说明，避免每屏重复 |
+| `printClaudeGlobalWarning` | 写入 `settings.json` 前的简短警告 |
+| `printConfigSyncSummary` | 两步保存后的本地 / Claude 侧摘要 |
+| `printClaudeDoneHint` | 同步后如何执行 `claude` |
 
 ---
 
