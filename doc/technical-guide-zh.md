@@ -1,4 +1,4 @@
-# llm-providers-config 技术设计文档
+# Claude Helper 技术设计文档
 
 > 本文档面向技术分享与维护，侧重架构、数据流与实现细节。适用于代码评审、新贡献者上手或与 [openclaw-cursor-brain 技术文档](https://github.com/andeya/openclaw-cursor-brain/blob/main/doc/technical-guide-zh.md) 同级的内部对齐。
 
@@ -21,7 +21,7 @@
 
 ### 1.1 一句话定义
 
-**llm-providers-config** 是一个 Node.js CLI（`llm-config`），在本地集中保存多家 LLM 供应商的 **API Key** 与可选 **Base URL**，并支持：
+**Claude Helper**（npm 包名 `claude-helper`，命令 `claude-helper`）是一个 Node.js CLI，在本地集中保存多家 LLM 供应商的 **API Key** 与可选 **Base URL**，并支持：
 
 - 向 **OpenAI 兼容** 客户端导出 `OPENAI_*` 环境变量；
 - 向 **Claude Code** 导出或合并 `ANTHROPIC_*` 到 `~/.claude/settings.json` 的 `env`。
@@ -51,7 +51,7 @@
 ### 1.4 仓库结构
 
 ```
-llm-providers-config/
+claude-helper/   # 仓库目录名可与包名不同
 ├── package.json
 ├── tsconfig.json
 ├── README.md                 # 用户向快速上手
@@ -103,8 +103,8 @@ flowchart TB
 
 | 消费者 | 输入来源 | 协议/格式 |
 |--------|----------|-----------|
-| LiteLLM、curl、OpenAI SDK | `llm-config export` | Shell `export` 或 JSON |
-| Claude Code | `llm-config claude apply` | [官方 settings `env`](https://docs.anthropic.com/en/docs/claude-code/settings) |
+| LiteLLM、curl、OpenAI SDK | `claude-helper export` | Shell `export` 或 JSON |
+| Claude Code | `claude-helper claude apply` | [官方 settings `env`](https://docs.anthropic.com/en/docs/claude-code/settings) |
 
 本工具**不**发起模型推理 HTTP 请求，仅读写本地文件与标准输出。
 
@@ -242,11 +242,11 @@ Claude Code 期望 **Anthropic Messages** 兼容端点。多数国内 OpenAI 兼
 ### 6.1 安装
 
 ```bash
-git clone <repo-url> llm-providers-config
-cd llm-providers-config
+git clone <repo-url> claude-helper
+cd claude-helper
 npm install
 npm run build
-npm link   # 可选：全局 llm-config
+npm link   # 可选：全局 claude-helper
 ```
 
 ### 6.2 涉及的文件路径
@@ -259,7 +259,7 @@ npm link   # 可选：全局 llm-config
 
 ### 6.3 环境变量（本工具不读取）
 
-`llm-config` **不**读取 `HTTP_PROXY` 等；若未来增加在线校验 Key，可按 [Coding Tool Helper 排障说明](https://docs.z.ai/devpack/extension/coding-tool-helper) 在 Node 层设置代理。
+`claude-helper` **不**读取 `HTTP_PROXY` 等；若未来增加在线校验 Key，可按 [Coding Tool Helper 排障说明](https://docs.z.ai/devpack/extension/coding-tool-helper) 在 Node 层设置代理。
 
 ---
 
@@ -268,26 +268,26 @@ npm link   # 可选：全局 llm-config
 ### 7.1 典型流程：Claude Code + 智谱
 
 ```bash
-llm-config set glm --key <KEY>
-llm-config active glm
-llm-config claude apply
+claude-helper set glm --key <KEY>
+claude-helper active glm
+claude-helper claude apply
 ```
 
 ### 7.2 典型流程：Claude Code + OpenRouter
 
 ```bash
-llm-config set openrouter --key <KEY>
-llm-config active openrouter
-llm-config claude apply
+claude-helper set openrouter --key <KEY>
+claude-helper active openrouter
+claude-helper claude apply
 ```
 
 ### 7.3 OpenAI-only 供应商 → Claude Code（LiteLLM）
 
-1. `llm-config set kimi --key <KEY>`
-2. 用 `llm-config export -p kimi` 中的 `OPENAI_*` 配置 LiteLLM 上游
+1. `claude-helper set kimi --key <KEY>`
+2. 用 `claude-helper export -p kimi` 中的 `OPENAI_*` 配置 LiteLLM 上游
 3. 启动 LiteLLM 的 Anthropic 兼容监听
-4. `llm-config set kimi --anthropic-base http://127.0.0.1:<端口>`
-5. `llm-config claude apply -p kimi`
+4. `claude-helper set kimi --anthropic-base http://127.0.0.1:<端口>`
+5. `claude-helper claude apply -p kimi`
 
 ### 7.4 故障排查
 
@@ -343,7 +343,7 @@ npm run debug -- list
 | `CONFIG_DIR` | `~/.llm-providers`（见 `store.ts`） |
 | `CONFIG_PATH` | `~/.llm-providers/config.yaml` |
 | `SETTINGS_SCHEMA` | `https://json.schemastore.org/claude-code-settings.json` |
-| `bin` | `llm-config` → `dist/cli.js` |
+| `bin` | `claude-helper`（`package.json`）→ `dist/cli.js` |
 
 ---
 

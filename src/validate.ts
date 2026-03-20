@@ -9,7 +9,7 @@ import {
 import type { ConfigFile } from './store.js';
 
 const PROBE_TIMEOUT_MS = 8000;
-const UA = 'llm-providers-config/check';
+const UA = 'claude-helper/check';
 
 /** 轻量探测：能连上主机即可（多数 API 根路径返回 401/404 仍算「可达」） */
 export async function probeUrl(url: string): Promise<{ ok: boolean; detail: string }> {
@@ -39,7 +39,7 @@ export async function validateAfterSave(cfg: ConfigFile): Promise<void> {
 
   const withKey = PROVIDER_IDS.filter((id) => cfg.providers[id]?.api_key?.trim());
   if (withKey.length === 0) {
-    console.log(chalk.yellow('还没有任何供应商填写 API Key；补全后再运行：llm-config check'));
+    console.log(chalk.yellow('还没有任何供应商填写 API Key；补全后再运行：claude-helper check'));
     printClaudeHelp(cfg, false, false);
     return;
   }
@@ -48,7 +48,7 @@ export async function validateAfterSave(cfg: ConfigFile): Promise<void> {
 
   const active = cfg.active_provider;
   if (!active) {
-    console.log(chalk.yellow('未设置默认供应商。执行：llm-config active <id>'));
+    console.log(chalk.yellow('未设置默认供应商。执行：claude-helper active <id>'));
     printClaudeHelp(cfg, false, false);
     return;
   }
@@ -57,7 +57,7 @@ export async function validateAfterSave(cfg: ConfigFile): Promise<void> {
   if (!entry?.api_key?.trim()) {
     console.log(
       chalk.yellow(
-        `默认供应商是「${PROVIDERS[active].label}」，但未配置 Key；请改 active 或执行：llm-config set ${active}`,
+        `默认供应商是「${PROVIDERS[active].label}」，但未配置 Key；请改 active 或执行：claude-helper set ${active}`,
       ),
     );
     printClaudeHelp(cfg, false, false);
@@ -88,7 +88,7 @@ export async function validateAfterSave(cfg: ConfigFile): Promise<void> {
   } else {
     console.log(
       chalk.yellow(
-        `○ 当前默认供应商无内置 Claude 端点；Claude Code 需 LiteLLM 等网关，并设置：\n    llm-config set ${active} --anthropic-base <网关URL>`,
+        `○ 当前默认供应商无内置 Claude 端点；Claude Code 需 LiteLLM 等网关，并设置：\n    claude-helper set ${active} --anthropic-base <网关URL>`,
       ),
     );
   }
@@ -122,16 +122,16 @@ function printClaudeHelp(cfg: ConfigFile, hasActiveKey: boolean, canApply: boole
   const entry = active ? cfg.providers[active] : undefined;
 
   if (!hasActiveKey || !active || !entry?.api_key?.trim()) {
-    console.log(chalk.cyan('1) 先为默认供应商保存 API Key，并设置默认：llm-config active <供应商id>'));
+    console.log(chalk.cyan('1) 先为默认供应商保存 API Key，并设置默认：claude-helper active <供应商id>'));
     console.log(chalk.dim('   说明：https://docs.anthropic.com/en/docs/claude-code/overview'));
-    console.log(chalk.dim('   随时复查：llm-config check\n'));
+    console.log(chalk.dim('   随时复查：claude-helper check\n'));
     return;
   }
 
   if (canApply) {
     console.log(
       chalk.cyan(
-        `1) 把环境变量写入本机 Claude 配置（会自动备份已有 ${claudeSettingsPath()}）：\n   ${chalk.bold('llm-config claude apply')}`,
+        `1) 把环境变量写入本机 Claude 配置（会自动备份已有 ${claudeSettingsPath()}）：\n   ${chalk.bold('claude-helper claude apply')}`,
       ),
     );
     console.log(
@@ -141,7 +141,7 @@ function printClaudeHelp(cfg: ConfigFile, hasActiveKey: boolean, canApply: boole
     );
     console.log(
       chalk.dim(
-        '   官方文档：https://docs.anthropic.com/en/docs/claude-code/overview\n   若只想临时生效当前终端：llm-config claude export 后 eval 打印的内容\n',
+        '   官方文档：https://docs.anthropic.com/en/docs/claude-code/overview\n   若只想临时生效当前终端：claude-helper claude export 后 eval 打印的内容\n',
       ),
     );
     return;
@@ -150,8 +150,8 @@ function printClaudeHelp(cfg: ConfigFile, hasActiveKey: boolean, canApply: boole
   console.log(
     chalk.yellow(
       '当前默认供应商不能一键 claude apply。请先搭好 Anthropic 兼容网关（如 LiteLLM），然后：\n' +
-        `   llm-config set ${active} --anthropic-base <你的网关根URL>\n` +
-        '   llm-config claude apply\n',
+        `   claude-helper set ${active} --anthropic-base <你的网关根URL>\n` +
+        '   claude-helper claude apply\n',
     ),
   );
   console.log(chalk.dim('   说明见 README「LiteLLM」一节与 doc/technical-guide-zh.md\n'));

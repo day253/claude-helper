@@ -36,7 +36,7 @@ function printMissingClaudeBase(id: ProviderId): void {
       `${meta.label}（${id}）未配置可用于 Claude Code 的 Anthropic 兼容 Base URL。\n` +
         `该供应商默认仅为 OpenAI 兼容端点，Claude Code 需要 Anthropic Messages 兼容网关（例如 LiteLLM）。\n\n` +
         `请任选其一：\n` +
-        `  1) 若已有网关：llm-config set ${id} --anthropic-base <网关根URL>\n` +
+        `  1) 若已有网关：claude-helper set ${id} --anthropic-base <网关根URL>\n` +
         `  2) 用 OpenAI 变量配置 LiteLLM 后再填 anthropic-base，详见 README「LiteLLM」一节\n` +
         `内置可一键 apply 的供应商：glm、openrouter（无需额外 anthropic-base）。`,
     ),
@@ -187,7 +187,7 @@ function cmdExport(provider: ProviderId | undefined, format: 'shell' | 'json'): 
   const cfg = loadConfig();
   const id = resolveProvider(provider, cfg);
   if (!id) {
-    console.error(chalk.red('请指定供应商，或先执行: llm-config active <provider>'));
+    console.error(chalk.red('请指定供应商，或先执行: claude-helper active <provider>'));
     process.exit(1);
   }
   const e = cfg.providers[id];
@@ -217,14 +217,14 @@ function cmdExport(provider: ProviderId | undefined, format: 'shell' | 'json'): 
   console.log(`export OPENAI_API_KEY=${shellQuote(e.api_key)}`);
   console.log(`export OPENAI_BASE_URL=${shellQuote(base)}`);
   if (model) console.log(`export OPENAI_MODEL=${shellQuote(model)}`);
-  console.log(chalk.dim('\n# 当前 shell 中执行: eval "$(llm-config export -p ' + id + ')"'));
+  console.log(chalk.dim('\n# 当前 shell 中执行: eval "$(claude-helper export -p ' + id + ')"'));
 }
 
 function cmdClaudeExport(provider: ProviderId | undefined): void {
   const cfg = loadConfig();
   const id = resolveProvider(provider, cfg);
   if (!id) {
-    console.error(chalk.red('请指定供应商，或先执行: llm-config active <provider>'));
+    console.error(chalk.red('请指定供应商，或先执行: claude-helper active <provider>'));
     process.exit(1);
   }
   const e = cfg.providers[id];
@@ -251,7 +251,7 @@ function cmdClaudeExport(provider: ProviderId | undefined): void {
   }
   console.log(
     chalk.dim(
-      '\n# 也可写入 Claude Code：llm-config claude apply' +
+      '\n# 也可写入 Claude Code：claude-helper claude apply' +
         (id ? ` -p ${id}` : '') +
         '\n# 配置文件：' +
         claudeSettingsPath(),
@@ -263,7 +263,7 @@ function cmdClaudeApply(provider: ProviderId | undefined): void {
   const cfg = loadConfig();
   const id = resolveProvider(provider, cfg);
   if (!id) {
-    console.error(chalk.red('请指定供应商，或先执行: llm-config active <provider>'));
+    console.error(chalk.red('请指定供应商，或先执行: claude-helper active <provider>'));
     process.exit(1);
   }
   const e = cfg.providers[id];
@@ -376,15 +376,15 @@ async function cmdInit(): Promise<void> {
   ]);
   cfg = { ...cfg, active_provider: active };
   saveConfig(cfg);
-  console.log(chalk.green('\n初始化完成。查看: llm-config list'));
+  console.log(chalk.green('\n初始化完成。查看: claude-helper list'));
   await validateAfterSave(loadConfig());
 }
 
 const program = new Command();
 program
-  .name('llm-config')
-  .description('多供应商 LLM API Key 本地配置，并导出给 OpenAI 客户端或 Claude Code')
-  .version('0.2.2');
+  .name('claude-helper')
+  .description('Claude Helper：多供应商 API Key、网络检查与 Claude Code 配置')
+  .version('0.3.0');
 
 program
   .command('check')
