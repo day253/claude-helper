@@ -1,4 +1,10 @@
-export type ProviderId = 'glm' | 'minimax' | 'openrouter';
+export type ProviderId =
+  | 'glm'
+  | 'minimax'
+  | 'moonshot'
+  | 'openrouter'
+  | 'volcengine'
+  | 'zai';
 
 export interface ProviderMeta {
   id: ProviderId;
@@ -22,11 +28,15 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     id: 'glm',
     label: '智谱 GLM (BigModel)',
     defaultBaseUrl: 'https://open.bigmodel.cn/api/paas/v4',
-    docs: 'https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper',
+    docs: 'https://docs.bigmodel.cn/cn/coding-plan/tool/claude',
     keyHelp:
-      '按文档「快速开始」获取 API Key。若还要自动装 Claude Code、配 MCP、插件市场等，请用官方：npx @z_ai/coding-helper（与本工具分工不同，见 README）。',
+      '文档：https://docs.bigmodel.cn/cn/coding-plan/tool/claude ；一键助手：https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper 。开放平台 API Keys。若需自动装 CLI、MCP、插件市场等：npx @z_ai/coding-helper。',
     claudeAnthropicBaseUrl: 'https://open.bigmodel.cn/api/anthropic',
-    claudeUseAuthToken: false,
+    claudeUseAuthToken: true,
+    claudeExtraEnv: {
+      API_TIMEOUT_MS: '3000000',
+      CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1',
+    },
   },
   minimax: {
     id: 'minimax',
@@ -47,14 +57,55 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
       ANTHROPIC_DEFAULT_HAIKU_MODEL: 'MiniMax-M2.7',
     },
   },
+  moonshot: {
+    id: 'moonshot',
+    label: '月之暗面 Kimi (Moonshot)',
+    defaultBaseUrl: 'https://api.moonshot.ai/v1',
+    docs: 'https://platform.moonshot.ai/docs/guide/agent-support',
+    keyHelp:
+      '在开放平台创建 API Key。默认 Anthropic Base 为国际站；**中国大陆**可：claude-helper set moonshot --anthropic-base https://api.moonshot.cn/anthropic。模型名等以官方文档为准，可用 --model 覆盖。',
+    claudeAnthropicBaseUrl: 'https://api.moonshot.ai/anthropic',
+    claudeUseAuthToken: true,
+    claudeExtraEnv: {
+      ANTHROPIC_MODEL: 'kimi-k2.5',
+      ANTHROPIC_DEFAULT_OPUS_MODEL: 'kimi-k2.5',
+      ANTHROPIC_DEFAULT_SONNET_MODEL: 'kimi-k2.5',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'kimi-k2.5',
+      CLAUDE_CODE_SUBAGENT_MODEL: 'kimi-k2.5',
+      ENABLE_TOOL_SEARCH: 'false',
+    },
+  },
   openrouter: {
     id: 'openrouter',
     label: 'OpenRouter',
     defaultBaseUrl: 'https://openrouter.ai/api/v1',
-    docs: 'https://openrouter.ai/docs',
+    docs: 'https://openrouter.ai/docs/guides/guides/coding-agents/claude-code-integration',
     keyHelp: '打开 OpenRouter → Keys → Create Key；用量与计费见控制台说明。',
     claudeAnthropicBaseUrl: 'https://openrouter.ai/api',
     claudeUseAuthToken: true,
+  },
+  volcengine: {
+    id: 'volcengine',
+    label: '火山引擎方舟 (Coding Plan)',
+    defaultBaseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
+    docs: 'https://www.volcengine.com/docs/82379/1928262',
+    keyHelp:
+      '须开通火山方舟 **Coding Plan**，按官方《Claude Code》文档填写密钥与模型。默认 Anthropic 根为北京区 `/api/coding`；若文档更新区域或路径，请用 --anthropic-base 覆盖。',
+    claudeAnthropicBaseUrl: 'https://ark.cn-beijing.volces.com/api/coding',
+    claudeUseAuthToken: true,
+  },
+  zai: {
+    id: 'zai',
+    label: 'Z.AI（国际站 GLM Coding Plan）',
+    defaultBaseUrl: 'https://api.z.ai/api/paas/v4',
+    docs: 'https://docs.z.ai/scenario-example/develop-tools/claude',
+    keyHelp:
+      '在 [Z.AI 开放平台](https://z.ai/model-api) 创建 API Key。Anthropic Base 默认 `https://api.z.ai/api/anthropic`。**GLM 编码套餐** OpenAI 兼容端点多为 `.../coding/paas/v4`，需要时可：claude-helper set zai --base https://api.z.ai/api/coding/paas/v4',
+    claudeAnthropicBaseUrl: 'https://api.z.ai/api/anthropic',
+    claudeUseAuthToken: true,
+    claudeExtraEnv: {
+      API_TIMEOUT_MS: '3000000',
+    },
   },
 };
 

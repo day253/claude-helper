@@ -122,7 +122,7 @@ function printClaudeHelp(cfg: ConfigFile, hasActiveKey: boolean, canApply: boole
   const entry = active ? cfg.providers[active] : undefined;
 
   if (!hasActiveKey || !active || !entry?.api_key?.trim()) {
-    console.log(chalk.cyan('1) 先保存 API Key，并设置默认：claude-helper active glm / minimax / openrouter'));
+    console.log(chalk.cyan('1) 先保存 API Key，并设置默认：claude-helper active <供应商>（见 claude-helper --help 中的 provider 列表）'));
     console.log(chalk.dim('   说明：https://docs.anthropic.com/en/docs/claude-code/overview'));
     console.log(chalk.dim('   随时复查：claude-helper check\n'));
     return;

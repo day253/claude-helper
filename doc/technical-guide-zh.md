@@ -2,6 +2,8 @@
 
 > 本文档面向技术分享与维护，侧重架构、数据流与实现细节。适用于代码评审、新贡献者上手或与 [openclaw-cursor-brain 技术文档](https://github.com/andeya/openclaw-cursor-brain/blob/main/doc/technical-guide-zh.md) 同级的内部对齐。
 
+**厂商官方文档索引**（MiniMax、智谱一键助手、Kimi、火山、OpenRouter、Z.AI 等）：[vendor-docs-zh.md](./vendor-docs-zh.md)。
+
 ---
 
 ## 目录
@@ -12,7 +14,7 @@
 - [第 4 章：关键技术决策](#第-4-章关键技术决策)
 - [第 5 章：模块设计](#第-5-章模块设计)
 - [第 6 章：安装与配置](#第-6-章安装与配置)
-- [第 7 章：使用指南](#第-7-章使用指南)（含故障排查）
+- [第 7 章：使用指南](#第-7-章使用指南)（含故障排查 §7.5）
 - [第 8 章：开发与贡献](#第-8-章开发与贡献)
 
 ---
@@ -26,7 +28,7 @@
 - 向 **OpenAI 兼容** 客户端导出 `OPENAI_*` 环境变量；
 - 向 **Claude Code** 导出或合并 `ANTHROPIC_*` 到 `~/.claude/settings.json` 的 `env`。
 
-产品形态上与智谱 [一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper)（`@z_ai/coding-helper`）的向导体验相近，但**刻意收窄**：不安装编码工具、不管理 MCP，只做密钥与对接说明；完整装机请以官方文档为准。
+产品形态上与智谱 [一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper#)（`@z_ai/coding-helper`）的向导体验相近，但**刻意收窄**：不安装编码工具、不管理 MCP，只做密钥与对接说明；完整装机与套餐规则请以 **[vendor-docs-zh.md](./vendor-docs-zh.md)** 中的官方链接为准。
 
 ### 1.2 解决的核心问题
 
@@ -34,7 +36,7 @@
 |------|----------|
 | 多供应商 Key 散落在各 shell 配置里 | 统一写入 `~/.llm-providers/config.yaml` |
 | 用户不知道去哪申请 Key | 交互前打印 `keyHelp` + 官方 `docs` 链接 |
-| Claude Code 需要 Anthropic 形态端点 | **仅收录**带官方文档/网关给出的 `claudeAnthropicBaseUrl` 的供应商（当前 glm、minimax、openrouter）；可用 `anthropic_base_url` 覆盖 |
+| Claude Code 需要 Anthropic 形态端点 | **仅收录**厂商文档给出的 `claudeAnthropicBaseUrl`（当前见 `PROVIDER_IDS`）；可用 `anthropic_base_url` 覆盖；链接汇总见 [vendor-docs-zh.md](./vendor-docs-zh.md) |
 | 误覆盖用户 Claude 全局配置 | `claude apply` 仅合并 `env`，写入前备份 `settings.json.bak.<timestamp>` |
 
 ### 1.3 技术栈
@@ -56,7 +58,8 @@ claude-helper/   # 仓库目录名可与包名不同
 ├── tsconfig.json
 ├── README.md                 # 用户向快速上手
 ├── doc/
-│   └── technical-guide-zh.md # 本文档
+│   ├── technical-guide-zh.md # 本文档
+│   └── vendor-docs-zh.md     # 厂商官方文档索引（Claude Code / 套餐）
 ├── src/
 │   ├── cli.ts                # 命令注册与业务编排
 │   ├── providers.ts          # 供应商元数据与 ProviderId
@@ -180,7 +183,7 @@ flowchart TD
 
 Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无官方 Anthropic 根或文档的渠道**不列入** `PROVIDERS`，避免用户误以为可一键 `claude apply`。
 
-**决策**：新供应商须在厂商文档中核实可用的 Anthropic 兼容根 URL（如 [MiniMax · Claude Code](https://platform.minimax.io/docs/token-plan/claude-code)）；老配置里未知 id 在 `loadConfig` 时会被忽略。部分厂商还会在 `env` 中要求额外键（超时、模型别名等），通过 `ProviderMeta.claudeExtraEnv` 描述；`claude apply` 前会统一清除**所有**供应商在 `claudeExtraEnv` 中声明过的键名，再写入当前供应商的补丁，避免切换后残留。
+**决策**：新供应商须在厂商文档中核实可用的 Anthropic 兼容根 URL，并写入 [vendor-docs-zh.md](./vendor-docs-zh.md)；老配置里未知 id 在 `loadConfig` 时会被忽略。部分厂商还会在 `env` 中要求额外键（超时、模型别名等），通过 `ProviderMeta.claudeExtraEnv` 描述；`claude apply` 前会统一清除**所有**供应商在 `claudeExtraEnv` 中声明过的键名，再写入当前供应商的补丁，避免切换后残留。
 
 ### 4.3 settings.json 合并策略
 
@@ -291,13 +294,34 @@ claude-helper active minimax
 claude-helper claude apply
 ```
 
-### 7.4 故障排查
+### 7.4 典型流程：Z.AI（国际）/ Kimi（Moonshot）/ 火山方舟
+
+```bash
+# Z.AI（GLM Coding Plan，国际站）
+claude-helper set zai --key <KEY>
+claude-helper active zai
+claude-helper claude apply
+
+# Kimi（默认国际 Anthropic 根；中国大陆可加 --anthropic-base https://api.moonshot.cn/anthropic）
+claude-helper set moonshot --key <KEY>
+claude-helper active moonshot
+claude-helper claude apply
+
+# 火山方舟 Coding Plan（默认北京区 /api/coding，以官方文档为准）
+claude-helper set volcengine --key <KEY>
+claude-helper active volcengine
+claude-helper claude apply
+```
+
+官方链接与套餐要求见 [vendor-docs-zh.md](./vendor-docs-zh.md)。
+
+### 7.5 故障排查
 
 | 现象 | 排查 |
 |------|------|
 | `claude apply` 报缺 Anthropic Base | 配置是否损坏；尝试 `set <id> --anthropic-base` 覆盖 |
 | `settings.json 不是合法 JSON` | 手动修复或从 `settings.json.bak.*` 恢复 |
-| 切换供应商后仍走旧认证 | 确认 `ANTHROPIC_AUTH_TOKEN` 是否已被本工具删除（OpenRouter → 智谱） |
+| 切换供应商后仍走旧认证 | 确认 `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_API_KEY` 是否与当前厂商文档一致；环境变量优先级高于 `settings.json` 时需先清理 shell 中的冲突项 |
 
 ---
 
@@ -351,9 +375,6 @@ npm run debug -- list
 
 ## 外部参考
 
-- [智谱 · 一键安装助手（GLM Coding Plan）](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper)（`@z_ai/coding-helper`；与本项目职责对比见 README）
+- **[本仓库 vendor-docs-zh.md](./vendor-docs-zh.md)**：按供应商整理的官方文档（含 [智谱一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper#)、[智谱 Claude Code](https://docs.bigmodel.cn/cn/coding-plan/tool/claude)、[MiniMax Claude Code](https://platform.minimax.io/docs/token-plan/claude-code) 等）
 - [Claude Code settings](https://docs.anthropic.com/en/docs/claude-code/settings)
-- [OpenRouter × Claude Code](https://openrouter.ai/docs/guides/guides/coding-agents/claude-code-integration)
-- [MiniMax · Claude Code](https://platform.minimax.io/docs/token-plan/claude-code)
-- [Z.AI Coding Tool Helper（国际站说明）](https://docs.z.ai/devpack/extension/coding-tool-helper)
 - [openclaw-cursor-brain technical-guide-zh.md](https://github.com/andeya/openclaw-cursor-brain/blob/main/doc/technical-guide-zh.md)（文档结构参考）

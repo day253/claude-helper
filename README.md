@@ -2,15 +2,15 @@
 
 **npm 包名**：`claude-helper` · **命令**：`claude-helper`（**无子命令**即进入向导：先**选一家**供应商，再**按文档提示**填 API Key，等同 `init`）
 
-**技术设计（架构 / 数据流 / 决策）**：[doc/technical-guide-zh.md](doc/technical-guide-zh.md)（结构与 [openclaw-cursor-brain 技术文档](https://github.com/andeya/openclaw-cursor-brain/blob/main/doc/technical-guide-zh.md) 对齐，便于团队评审与贡献）。
+**技术设计**：[doc/technical-guide-zh.md](doc/technical-guide-zh.md) · **厂商文档索引（含 MiniMax / 智谱一键助手等官方链接）**：[doc/vendor-docs-zh.md](doc/vendor-docs-zh.md)
 
 面向 **Claude Code** 与 **OpenAI 兼容客户端**：在本地保存多家供应商的 **API Key**，交互时提示 **去哪里申请密钥**，并做 **网络检查**、**导出环境变量** 或 **合并写入** `~/.claude/settings.json`。
 
-智谱 **GLM 编码套餐** 官方装机向导见：[一键安装助手（Coding Tool Helper）](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper)（`npx @z_ai/coding-helper` / `coding-helper`）。**Claude Helper** 与之思路相近，但**刻意收窄**：不自动安装 CLI、不配 MCP/插件市场，只做 **Key 保管**、**网络检查**、**导出** 与 **`claude apply`**。国际站说明亦可对照 [Z.AI 文档](https://docs.z.ai/devpack/extension/coding-tool-helper)。
+智谱 **GLM 编码套餐**：[一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper#) · [Claude Code 专页](https://docs.bigmodel.cn/cn/coding-plan/tool/claude)。MiniMax：[Claude Code 接入](https://platform.minimax.io/docs/token-plan/claude-code)。**Claude Helper** 不替代官方装机向导（`npx @z_ai/coding-helper`），只做 **Key**、**检查**、**export** / **`claude apply`**；更多链接见 [vendor-docs-zh.md](doc/vendor-docs-zh.md)。
 
 配置文件：`~/.llm-providers/config.yaml`
 
-**0.4.1 起**内置 **glm / minimax / openrouter**（均有官方文档给出的 **Anthropic 兼容** 根 URL，可直接 `claude apply`）。旧版 YAML 里其它供应商 id 会在读取时**忽略**；若 `active_provider` 已失效会清空，请重新 `claude-helper` 向导或 `active`。
+**0.5.0 起**内置 **glm、minimax、moonshot、openrouter、volcengine、zai**（均在厂商文档中给出可对接 Claude Code 的 **Anthropic 兼容** 根 URL；`claude apply` 前请对照各文档核对密钥与套餐）。**破坏性**：`glm` 的 Claude 侧与智谱文档对齐为 **`ANTHROPIC_AUTH_TOKEN`**（不再写入 `ANTHROPIC_API_KEY`）；若你曾依赖旧行为，请重新 `claude apply`。未知供应商 id 会在读取 YAML 时**忽略**；无效 `active_provider` 会清空。
 
 ## 安装
 
@@ -50,15 +50,20 @@ GitHub 旧仓库 URL 一般会重定向到新名一段时间。
 | `claude-helper claude apply [-p id]` | 将本次计算的 `ANTHROPIC_*` **合并进** `~/.claude/settings.json` 的 `env`；**写入前备份**为 `settings.json.bak.<时间戳>` |
 | `claude-helper --help` / `claude-helper claude --help` | 帮助 |
 
-`provider`：`glm` | `minimax` | `openrouter`（均有官方 **Anthropic 兼容** 端点说明，可直接 `claude apply`）。
+`provider`：运行 `claude-helper --help` 查看当前列表（由 `src/providers.ts` 生成）。
 
 ## 供应商与 Claude Code 一键 apply
 
 | 供应商 | 申请密钥提示 | OpenAI 默认 Base | Anthropic Base（`claude apply`） |
 |--------|----------------|------------------|----------------------------------|
-| **glm** | [一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper) 或开放平台 API Keys | `https://open.bigmodel.cn/api/paas/v4` | `https://open.bigmodel.cn/api/anthropic` |
-| **minimax** | [Claude Code 接入（MiniMax）](https://platform.minimax.io/docs/token-plan/claude-code) | `https://api.minimax.io/v1` | 国际默认 `https://api.minimax.io/anthropic`；**中国大陆**请 `set minimax --anthropic-base https://api.minimaxi.com/anthropic`。`apply` 会一并写入官方文档建议的模型别名与超时等 `env`（见 `providers.ts` 中 `claudeExtraEnv`） |
-| **openrouter** | OpenRouter → Keys | `https://openrouter.ai/api/v1` | `https://openrouter.ai/api`（`ANTHROPIC_AUTH_TOKEN` + 空的 `ANTHROPIC_API_KEY`） |
+| **glm** | [一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper#) · [Claude Code](https://docs.bigmodel.cn/cn/coding-plan/tool/claude) | `https://open.bigmodel.cn/api/paas/v4` | `https://open.bigmodel.cn/api/anthropic`（`ANTHROPIC_AUTH_TOKEN` + 文档建议的超时等，见 `claudeExtraEnv`） |
+| **zai** | [Z.AI · Claude Code](https://docs.z.ai/scenario-example/develop-tools/claude) | `https://api.z.ai/api/paas/v4`（编码套餐常用 `.../coding/paas/v4`，可 `--base`） | `https://api.z.ai/api/anthropic` |
+| **minimax** | [MiniMax · Claude Code](https://platform.minimax.io/docs/token-plan/claude-code) | `https://api.minimax.io/v1` | 国际 `https://api.minimax.io/anthropic`；国内 `https://api.minimaxi.com/anthropic`（`--anthropic-base`） |
+| **moonshot** | [Kimi · 编程工具 / Claude Code](https://platform.moonshot.ai/docs/guide/agent-support) | `https://api.moonshot.ai/v1` | 默认 `https://api.moonshot.ai/anthropic`；国内可 `--anthropic-base https://api.moonshot.cn/anthropic` |
+| **openrouter** | [Claude Code 集成](https://openrouter.ai/docs/guides/guides/coding-agents/claude-code-integration) | `https://openrouter.ai/api/v1` | `https://openrouter.ai/api` |
+| **volcengine** | [火山方舟 · Claude Code](https://www.volcengine.com/docs/82379/1928262) | `https://ark.cn-beijing.volces.com/api/v3` | 默认 `https://ark.cn-beijing.volces.com/api/coding`（以控制台与文档为准） |
+
+完整链接表与维护说明：[doc/vendor-docs-zh.md](doc/vendor-docs-zh.md)。
 
 高级：若需改用自建代理根地址，可用 `claude-helper set <id> --anthropic-base <URL>` 覆盖内置 Anthropic Base。
 
@@ -95,7 +100,7 @@ claude-helper claude apply
 |--|-------------------------|-------------------------|
 | 范围 | 装编码工具、套餐、MCP、Claude 插件市场等 | **仅** Key、检查、`export` / `claude apply` |
 | 启动 | `npx @z_ai/coding-helper` | `claude-helper`（无参即向导选一家） |
-| 供应商 | 以 GLM 编码套餐为中心 | 内置 Anthropic 端点的 **glm、minimax、openrouter** |
+| 供应商 | 以 GLM 编码套餐为中心 | 多家 Anthropic 兼容网关（见上表与 [vendor-docs-zh.md](doc/vendor-docs-zh.md)） |
 | 配置落点 | 依官方向导 | `~/.llm-providers/config.yaml` + 可选 `~/.claude/settings.json` |
 
 ## 发布到 GitHub（例如账号或组织 `day253`）
