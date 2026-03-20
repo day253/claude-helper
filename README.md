@@ -19,7 +19,13 @@ npm run build
 npm link             # 可选，全局可用 claude-helper
 ```
 
-从旧版迁移：若曾全局链接过旧包名 `llm-providers-config` / 命令 `llm-config`，请先执行 `npm unlink -g llm-providers-config`，再在本仓库目录 `npm link`（得到 `claude-helper`）。GitHub 若仍用旧仓库 URL，Git 会自动重定向到新名一段时间。
+从旧版迁移 / **清理旧全局命令**：
+
+1. `npm unlink -g llm-providers-config`（若提示无此包可忽略）
+2. 若 `$(npm root -g)/../bin/llm-config` 仍存在且已失效：`rm -f "$(npm root -g)/../bin/llm-config"`
+3. 在本仓库执行 `npm link`，得到全局命令 `claude-helper`
+
+GitHub 旧仓库 URL 一般会重定向到新名一段时间。
 
 开发调试：
 
