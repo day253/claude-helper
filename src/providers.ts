@@ -75,7 +75,7 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     id: 'deepseek',
     label: 'DeepSeek',
     defaultBaseUrl: 'https://api.deepseek.com/v1',
-    docs: 'https://api-docs.deepseek.com/guides/anthropic_api',
+    docs: 'https://api-docs.deepseek.com/zh-cn/guides/anthropic_api',
     keyHelp:
       '开放平台 API Key。官方 Claude Code 示例使用 `ANTHROPIC_AUTH_TOKEN` 与较长 `API_TIMEOUT_MS`；模型名等见文档，可用 --model 覆盖。',
     claudeAnthropicBaseUrl: 'https://api.deepseek.com/anthropic',

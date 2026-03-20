@@ -25,7 +25,7 @@
 | **dashscope** | [百炼 · Claude Code（国内 Coding Plan）](https://help.aliyun.com/zh/model-studio/claude-code-coding-plan) | [OpenAI 兼容调用](https://help.aliyun.com/zh/model-studio/compatibility-of-openai-with-dashscope) |
 | **dashscope_intl** | [Model Studio · Claude Code（国际 Coding Plan）](https://www.alibabacloud.com/help/en/model-studio/claude-code-coding-plan) | 与 **modelstudio_intl**（按量）勿混用 |
 | **modelstudio_intl** | [Claude Code + Qwen（国际按量）](https://www.alibabacloud.com/help/doc-detail/2949529.html) | 仅新加坡区按量；Coding Plan 用 **dashscope_intl** |
-| **deepseek** | [Anthropic API / Claude Code](https://api-docs.deepseek.com/guides/anthropic_api) | [DeepSeek API 文档](https://api-docs.deepseek.com/) |
+| **deepseek** | [Anthropic API / Claude Code（中文）](https://api-docs.deepseek.com/zh-cn/guides/anthropic_api) | [DeepSeek API 文档](https://api-docs.deepseek.com/) |
 | **fireworks** | [Claude Code 集成](https://docs.fireworks.ai/ecosystem/integrations/claude-code) | [Anthropic 兼容说明](https://docs.fireworks.ai/tools-sdks/anthropic-compatibility) |
 | **glm**（智谱 · 国内） | [Claude Code 配置](https://docs.bigmodel.cn/cn/coding-plan/tool/claude) | [一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper) · [Claude API 兼容](https://docs.bigmodel.cn/cn/guide/develop/claude/introduction) |
 | **zai**（Z.AI · 国际） | [Claude Code + GLM Coding Plan](https://docs.z.ai/scenario-example/develop-tools/claude) | [Coding Tool Helper](https://docs.z.ai/devpack/extension/coding-tool-helper) · [OpenAI SDK](https://docs.z.ai/guides/develop/openai/python) |
