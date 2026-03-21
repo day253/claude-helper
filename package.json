@@ -1,7 +1,7 @@
 {
   "name": "claude-helper",
   "version": "0.6.8",
-  "description": "Multi-provider API key wizard, health checks, and merge into Claude Code settings.json (ANTHROPIC_*)",
+  "description": "Multi-provider API key wizard, health checks, and merge into Claude Code settings.json (ANTHROPIC_*). 多供应商 API Key 向导、健康检查与合并写入 Claude Code settings.json（ANTHROPIC_*）。",
   "license": "MIT",
   "keywords": [
     "claude",
