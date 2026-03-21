@@ -1,7 +1,7 @@
 {
   "name": "claude-helper",
   "version": "0.6.8",
-  "description": "Pick your provider—guided API key setup, that's it. 选择你的供应商，帮你配置 API Key，完事儿。",
+  "description": "Pick your provider—guided API key setup. 选择你的供应商，帮你配置 API Key。",
   "license": "MIT",
   "keywords": [
     "claude",
