@@ -47,3 +47,14 @@ npm 支持把 **GitHub 仓库** 登记为 [Trusted Publisher](https://docs.npmjs
 
 - [ ] 已添加 `NPM_TOKEN` Secret  
 - [ ] 测试：`package.json` 已 bump → `git tag v…` → `git push origin v…` → Actions 绿 → `npm view claude-helper version` 更新  
+
+## 排错：`ENEEDAUTH` / `need auth`
+
+日志里若出现 **`npm error need auth`**、**`ENEEDAUTH`**：
+
+1. **Secret 名称必须是 `NPM_TOKEN`**（与 workflow 里 `${{ secrets.NPM_TOKEN }}` 一致，区分大小写）。  
+2. Secret 要建在 **本仓库**（`day253/claude-helper`）的 **Actions** secrets 里，不是 Environment secrets（除非 workflow 显式写了 `environment:`）。  
+3. 在 [npm Access Tokens](https://www.npmjs.com/settings/~/tokens) 新建 **Automation**（经典）或 **Granular Access Token**（勾选 **Publish** 权限、包名选 `claude-helper`），复制后整段粘贴到 GitHub Secret。  
+4. 保存 Secret 后，在 **Actions** 里对失败的那次 workflow 点 **Re-run all jobs**；或再打一个**新版本** tag（registry 上已存在的版本不能重复发布）。
+
+工作流已增加「未配置 `NPM_TOKEN` 时直接失败并提示」的步骤，避免只看到含糊的 `ENEEDAUTH`。  
