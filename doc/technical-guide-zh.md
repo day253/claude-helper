@@ -225,7 +225,7 @@ Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无
 |------|------|
 | `effectiveOpenAIBase` | OpenAI 兼容 `export` 用 Base URL |
 | `effectiveClaudeBase` | 网关覆盖 vs 内置 Anthropic Base |
-| `buildClaudeEnv` | 生成待写入的 `ANTHROPIC_*` 键值 |
+| `buildClaudeEnv` | 生成待写入的 `ANTHROPIC_*` 键值；若配置 `default_model`，除覆盖 `ANTHROPIC_MODEL` 外，同步覆盖 `ANTHROPIC_SMALL_FAST_MODEL` 与 `ANTHROPIC_DEFAULT_{SONNET,OPUS,HAIKU}_MODEL`（Moonshot 另同步 `CLAUDE_CODE_SUBAGENT_MODEL`） |
 | `claudeEnvKeysToRemove` | 合并前删除：全部 `claudeExtraEnv` 曾用过的键名、按需删 `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_MODEL` |
 | `mergeClaudeSettings` | 备份 + JSON 解析 + env 合并 + 写回 |
 | `readClaudeSettingsEnv` | 只读 `settings.json` 的 `env`，键值规范为 string |

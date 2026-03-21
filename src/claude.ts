@@ -47,7 +47,16 @@ export function buildClaudeEnv(id: ProviderId, e: ProviderEntry): Record<string,
     Object.assign(out, meta.claudeExtraEnv);
   }
   const model = e.default_model?.trim();
-  if (model) out.ANTHROPIC_MODEL = model;
+  if (model) {
+    out.ANTHROPIC_MODEL = model;
+    out.ANTHROPIC_SMALL_FAST_MODEL = model;
+    out.ANTHROPIC_DEFAULT_SONNET_MODEL = model;
+    out.ANTHROPIC_DEFAULT_OPUS_MODEL = model;
+    out.ANTHROPIC_DEFAULT_HAIKU_MODEL = model;
+    if (meta.claudeExtraEnv?.CLAUDE_CODE_SUBAGENT_MODEL !== undefined) {
+      out.CLAUDE_CODE_SUBAGENT_MODEL = model;
+    }
+  }
   return out;
 }
 

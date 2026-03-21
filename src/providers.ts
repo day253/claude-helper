@@ -43,6 +43,10 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     claudeUseAuthToken: true,
     claudeExtraEnv: {
       ANTHROPIC_MODEL: 'ark-code-latest',
+      ANTHROPIC_SMALL_FAST_MODEL: 'ark-code-latest',
+      ANTHROPIC_DEFAULT_SONNET_MODEL: 'ark-code-latest',
+      ANTHROPIC_DEFAULT_OPUS_MODEL: 'ark-code-latest',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'ark-code-latest',
     },
   },
   dashscope: {
@@ -56,6 +60,10 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     claudeUseAuthToken: true,
     claudeExtraEnv: {
       ANTHROPIC_MODEL: 'qwen3.5-plus',
+      ANTHROPIC_SMALL_FAST_MODEL: 'qwen3.5-plus',
+      ANTHROPIC_DEFAULT_SONNET_MODEL: 'qwen3.5-plus',
+      ANTHROPIC_DEFAULT_OPUS_MODEL: 'qwen3.5-plus',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'qwen3.5-plus',
     },
   },
   dashscope_intl: {
@@ -69,6 +77,10 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     claudeUseAuthToken: true,
     claudeExtraEnv: {
       ANTHROPIC_MODEL: 'qwen3.5-plus',
+      ANTHROPIC_SMALL_FAST_MODEL: 'qwen3.5-plus',
+      ANTHROPIC_DEFAULT_SONNET_MODEL: 'qwen3.5-plus',
+      ANTHROPIC_DEFAULT_OPUS_MODEL: 'qwen3.5-plus',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'qwen3.5-plus',
     },
   },
   deepseek: {
@@ -84,6 +96,9 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
       API_TIMEOUT_MS: '600000',
       ANTHROPIC_MODEL: 'deepseek-chat',
       ANTHROPIC_SMALL_FAST_MODEL: 'deepseek-chat',
+      ANTHROPIC_DEFAULT_SONNET_MODEL: 'deepseek-chat',
+      ANTHROPIC_DEFAULT_OPUS_MODEL: 'deepseek-chat',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'deepseek-chat',
       CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1',
     },
   },
@@ -117,6 +132,11 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     claudeExtraEnv: {
       API_TIMEOUT_MS: '3000000',
       CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1',
+      ANTHROPIC_MODEL: 'glm-4.7',
+      ANTHROPIC_SMALL_FAST_MODEL: 'glm-4.5-air',
+      ANTHROPIC_DEFAULT_SONNET_MODEL: 'glm-4.7',
+      ANTHROPIC_DEFAULT_OPUS_MODEL: 'glm-4.7',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'glm-4.5-air',
     },
   },
   minimax: {
@@ -149,6 +169,10 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     claudeUseAuthToken: false,
     claudeExtraEnv: {
       ANTHROPIC_MODEL: 'qwen3.5-plus',
+      ANTHROPIC_SMALL_FAST_MODEL: 'qwen3.5-plus',
+      ANTHROPIC_DEFAULT_SONNET_MODEL: 'qwen3.5-plus',
+      ANTHROPIC_DEFAULT_OPUS_MODEL: 'qwen3.5-plus',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'qwen3.5-plus',
     },
   },
   moonshot: {
@@ -162,6 +186,7 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     claudeUseAuthToken: true,
     claudeExtraEnv: {
       ANTHROPIC_MODEL: 'kimi-k2.5',
+      ANTHROPIC_SMALL_FAST_MODEL: 'kimi-k2.5',
       ANTHROPIC_DEFAULT_OPUS_MODEL: 'kimi-k2.5',
       ANTHROPIC_DEFAULT_SONNET_MODEL: 'kimi-k2.5',
       ANTHROPIC_DEFAULT_HAIKU_MODEL: 'kimi-k2.5',
@@ -181,6 +206,9 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     claudeExtraEnv: {
       ANTHROPIC_MODEL: 'moonshotai/kimi-k2-instruct',
       ANTHROPIC_SMALL_FAST_MODEL: 'moonshotai/kimi-k2-instruct',
+      ANTHROPIC_DEFAULT_SONNET_MODEL: 'moonshotai/kimi-k2-instruct',
+      ANTHROPIC_DEFAULT_OPUS_MODEL: 'moonshotai/kimi-k2-instruct',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'moonshotai/kimi-k2-instruct',
     },
   },
   openrouter: {
@@ -188,9 +216,17 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     label: 'OpenRouter',
     defaultBaseUrl: 'https://openrouter.ai/api/v1',
     docs: 'https://openrouter.ai/docs/guides/guides/coding-agents/claude-code-integration',
-    keyHelp: '打开 OpenRouter → Keys → Create Key；用量与计费见控制台说明。',
+    keyHelp:
+      '打开 OpenRouter → Keys → Create Key；用量与计费见控制台说明。内置默认路由模型可 `set openrouter --model <OpenRouter 模型 ID>` 覆盖（见 openrouter.ai/models）。',
     claudeAnthropicBaseUrl: 'https://openrouter.ai/api',
     claudeUseAuthToken: true,
+    claudeExtraEnv: {
+      ANTHROPIC_MODEL: 'anthropic/claude-3.5-sonnet',
+      ANTHROPIC_SMALL_FAST_MODEL: 'anthropic/claude-3.5-sonnet',
+      ANTHROPIC_DEFAULT_SONNET_MODEL: 'anthropic/claude-3.5-sonnet',
+      ANTHROPIC_DEFAULT_OPUS_MODEL: 'anthropic/claude-3.5-sonnet',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'anthropic/claude-3.5-sonnet',
+    },
   },
   siliconflow: {
     id: 'siliconflow',
@@ -198,9 +234,16 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     defaultBaseUrl: 'https://api.siliconflow.com/v1',
     docs: 'https://docs.siliconflow.com/cn/usercases/use-siliconcloud-in-ClaudeCode',
     keyHelp:
-      '控制台 API Key。文档使用 `ANTHROPIC_API_KEY`；Base 国内可用 `https://api.siliconflow.cn`（`set siliconflow --anthropic-base ...`）。**必须**指定模型：`claude-helper set siliconflow --key ... --model <模型ID>`（见 cloud.siliconflow.com/models）。',
+      '控制台 API Key。文档使用 `ANTHROPIC_API_KEY`；Base 国内可用 `https://api.siliconflow.cn`（`set siliconflow --anthropic-base ...`）。默认模型为常见示例 ID，请以 [模型列表](https://cloud.siliconflow.com/models) 为准并用 `set siliconflow --model <模型ID>` 覆盖。',
     claudeAnthropicBaseUrl: 'https://api.siliconflow.com',
     claudeUseAuthToken: false,
+    claudeExtraEnv: {
+      ANTHROPIC_MODEL: 'deepseek-ai/DeepSeek-V3',
+      ANTHROPIC_SMALL_FAST_MODEL: 'deepseek-ai/DeepSeek-V3',
+      ANTHROPIC_DEFAULT_SONNET_MODEL: 'deepseek-ai/DeepSeek-V3',
+      ANTHROPIC_DEFAULT_OPUS_MODEL: 'deepseek-ai/DeepSeek-V3',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'deepseek-ai/DeepSeek-V3',
+    },
   },
   volcengine: {
     id: 'volcengine',
@@ -208,9 +251,16 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     defaultBaseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
     docs: 'https://www.volcengine.com/docs/82379/1928262',
     keyHelp:
-      '须开通火山方舟 **Coding Plan**，按官方《Claude Code》文档填写密钥与模型。默认 Anthropic 根为北京区 `/api/coding`；若文档更新区域或路径，请用 --anthropic-base 覆盖。',
+      '须开通火山方舟 **Coding Plan**，按官方《Claude Code》文档填写密钥与模型。默认 Anthropic 根为北京区 `/api/coding`；内置默认模型 ID 为常见占位，请以控制台为准并用 `--model` 覆盖；路径变更请用 `--anthropic-base`。',
     claudeAnthropicBaseUrl: 'https://ark.cn-beijing.volces.com/api/coding',
     claudeUseAuthToken: true,
+    claudeExtraEnv: {
+      ANTHROPIC_MODEL: 'ark-code-latest',
+      ANTHROPIC_SMALL_FAST_MODEL: 'ark-code-latest',
+      ANTHROPIC_DEFAULT_SONNET_MODEL: 'ark-code-latest',
+      ANTHROPIC_DEFAULT_OPUS_MODEL: 'ark-code-latest',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'ark-code-latest',
+    },
   },
   zai: {
     id: 'zai',
@@ -223,6 +273,11 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     claudeUseAuthToken: true,
     claudeExtraEnv: {
       API_TIMEOUT_MS: '3000000',
+      ANTHROPIC_MODEL: 'glm-4.7',
+      ANTHROPIC_SMALL_FAST_MODEL: 'glm-4.5-air',
+      ANTHROPIC_DEFAULT_SONNET_MODEL: 'glm-4.7',
+      ANTHROPIC_DEFAULT_OPUS_MODEL: 'glm-4.7',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'glm-4.5-air',
     },
   },
 };

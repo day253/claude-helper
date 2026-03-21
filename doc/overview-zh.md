@@ -57,7 +57,7 @@ GitHub 旧仓库 URL 一般会重定向到新名一段时间。
 |--------|-----------|------|
 | **glm** | [智谱 Claude Code](https://docs.bigmodel.cn/cn/coding-plan/tool/claude) | `ANTHROPIC_AUTH_TOKEN`；向导默认首项 |
 | **dashscope** / **dashscope_intl** / **modelstudio_intl** | [国内 Coding Plan](https://help.aliyun.com/zh/model-studio/claude-code-coding-plan) · [国际 Coding Plan](https://www.alibabacloud.com/help/en/model-studio/claude-code-coding-plan) · [国际按量](https://www.alibabacloud.com/help/doc-detail/2949529.html) | 三者密钥与 Base **不同**，请按控制台套餐选择 id |
-| **deepseek** / **fireworks** / **siliconflow** / **novita** | [DeepSeek Anthropic（中文）](https://api-docs.deepseek.com/zh-cn/guides/anthropic_api) · [Fireworks](https://docs.fireworks.ai/ecosystem/integrations/claude-code) · [SiliconFlow](https://docs.siliconflow.com/cn/usercases/use-siliconcloud-in-ClaudeCode) · [Novita](https://novita.ai/docs/guides/claude-code) | Fireworks/SiliconFlow 文档为 **`ANTHROPIC_API_KEY`**；SiliconFlow **必须** `--model` |
+| **deepseek** / **fireworks** / **siliconflow** / **novita** | [DeepSeek Anthropic（中文）](https://api-docs.deepseek.com/zh-cn/guides/anthropic_api) · [Fireworks](https://docs.fireworks.ai/ecosystem/integrations/claude-code) · [SiliconFlow](https://docs.siliconflow.com/cn/usercases/use-siliconcloud-in-ClaudeCode) · [Novita](https://novita.ai/docs/guides/claude-code) | Fireworks/SiliconFlow 文档为 **`ANTHROPIC_API_KEY`**；SiliconFlow 有内置占位模型，**建议**按控制台用 `--model` 覆盖 |
 | **minimax** / **moonshot** / **openrouter** / **volcengine** / **zai** / **byteplus** | 见 [vendor-docs-zh.md](./vendor-docs-zh.md) | 区域或路径以官方为准，可用 `--anthropic-base` 覆盖 |
 
 高级：若需改用自建代理根地址，可用 `claude-helper set <id> --anthropic-base <URL>` 覆盖内置 Anthropic Base。

@@ -2,6 +2,8 @@
 
 本页汇总 **与本工具内置供应商相关** 的官方说明链接，便于对照环境变量与套餐要求。`claude-helper` 具体写入的键仍以 `src/providers.ts` 为准。
 
+各内置供应商在 `src/providers.ts` 的 `claudeExtraEnv` 中尽量补齐 **`ANTHROPIC_MODEL`、`ANTHROPIC_SMALL_FAST_MODEL`、`ANTHROPIC_DEFAULT_SONNET_MODEL` / `OPUS` / `HAIKU`**（具体 ID 以各厂商文档为准；OpenRouter / SiliconFlow / 火山等为常见占位，务必按需 `set <id> --model` 覆盖）。**glm / zai** 的 Sonnet/Opus 与 Haiku 默认拆分见 [智谱](https://docs.bigmodel.cn/cn/coding-plan/tool/claude) / [Z.AI](https://docs.z.ai/scenario-example/develop-tools/claude)；改用 GLM-5 等可 `set glm --model glm-5`（会同步覆盖上述同组键）或手改 `~/.claude/settings.json`。
+
 内置供应商 id 一览（`claude-helper --help` 与 `PROVIDER_IDS` 一致）：
 
 `byteplus` · `dashscope` · `dashscope_intl` · `deepseek` · `fireworks` · `glm` · `minimax` · `modelstudio_intl` · `moonshot` · `novita` · `openrouter` · `siliconflow` · `volcengine` · `zai`
