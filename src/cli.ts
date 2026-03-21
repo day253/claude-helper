@@ -284,8 +284,11 @@ async function cmdActive(id: ProviderId | undefined): Promise<void> {
   await validateAfterSave(loadConfig());
 }
 
-async function cmdCheck(opts?: { json?: boolean }): Promise<void> {
-  await validateAfterSave(loadConfig(), undefined, { json: opts?.json });
+async function cmdCheck(opts?: { json?: boolean; verbose?: boolean }): Promise<void> {
+  await validateAfterSave(loadConfig(), undefined, {
+    json: opts?.json,
+    ...(!opts?.json && { ui: 'check' as const, verbose: Boolean(opts?.verbose) }),
+  });
 }
 
 function cmdExport(provider: ProviderId | undefined, format: 'shell' | 'json'): void {
@@ -578,7 +581,8 @@ async function runSetupWizard(): Promise<void> {
 
     if (action === 'check') {
       printSection(s.sectionChecking);
-      await validateAfterSave(loadConfig());
+      await validateAfterSave(loadConfig(), undefined, { ui: 'check', verbose: false });
+      console.log(chalk.dim(s.wizardCheckVerboseHint));
       printOperationHint(s);
       const { afterCheck } = await promptWithHints<{ afterCheck: 'menu' | 'exit' }>(s, [
         {
@@ -653,13 +657,19 @@ program
   .command('check')
   .description('检查已保存的 Key / 默认供应商，并探测端点网络；提示如何启动 Claude Code')
   .option('--json', '以 JSON 输出结果（便于脚本）', false)
-  .action((opts: { json: boolean }) => cmdCheck({ json: opts.json }).catch(fatal));
+  .option('--verbose', '输出完整检查详情（含 settings 脚注与文档链接）', false)
+  .action((opts: { json: boolean; verbose: boolean }) =>
+    cmdCheck({ json: opts.json, verbose: opts.verbose }).catch(fatal),
+  );
 
 program
   .command('doctor')
   .description('同 check：健康检查（兼容 chelper doctor 习惯）')
   .option('--json', '以 JSON 输出结果（便于脚本）', false)
-  .action((opts: { json: boolean }) => cmdCheck({ json: opts.json }).catch(fatal));
+  .option('--verbose', '输出完整检查详情（含 settings 脚注与文档链接）', false)
+  .action((opts: { json: boolean; verbose: boolean }) =>
+    cmdCheck({ json: opts.json, verbose: opts.verbose }).catch(fatal),
+  );
 
 program
   .command('list')
@@ -780,7 +790,7 @@ claudeCmd
 
 program
   .command('init')
-  .description('交互主菜单：配置 Key / 写入 Claude Code / 检查（与无参运行 claude-helper 相同）')
+  .description('交互主菜单（与无参运行 claude-helper 相同）')
   .action(() => cmdInit().catch(fatal));
 
 function fatal(e: unknown): void {

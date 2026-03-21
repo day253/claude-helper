@@ -48,6 +48,18 @@ export type CheckCopy = {
   settingsSyncUnreadable: string;
   settingsSyncSkipped: string;
   settingsSyncFootnote: string;
+  /** check 精简模式：短标题、探测 spinner、单行摘要与简短下一步 */
+  titleCompact: string;
+  probeSpinner: string;
+  settingsSyncAlignedCompact: string;
+  /** $KEYS */
+  settingsSyncDriftCompactTpl: string;
+  settingsSyncNoFileCompact: string;
+  settingsSyncUnreadableCompact: string;
+  settingsSyncSkippedCompact: string;
+  compactHelpNeedKey: string;
+  compactHelpApply: string;
+  compactHelpFix: string;
 };
 
 export type WizardCopy = {
@@ -102,6 +114,8 @@ export type WizardCopy = {
   goodbye: string;
   sectionChecking: string;
   afterCheckPrompt: string;
+  /** 向导内「检查」为精简输出时，提示可查看完整报告 */
+  wizardCheckVerboseHint: string;
   backMenu: string;
   exitWizard: string;
   applyBlocked: string;
@@ -152,7 +166,7 @@ const zh: WizardCopy = {
   statusTitle: '当前配置',
   statusDefault: '默认供应商：',
   statusNotChosen: '尚未选择',
-  statusSuggest: '（建议先执行「① 配置 API Key」）',
+  statusSuggest: '（建议先执行「1. 配置 API Key」）',
   statusApiKey: 'API Key：',
   statusFootnote: '  └ 未执行「同步」时，Claude Code 可能仍用旧 settings 或环境变量',
   statusSettingsSyncTitle: '与 ~/.claude/settings.json：',
@@ -178,18 +192,19 @@ const zh: WizardCopy = {
   doneInstall: '  若提示未安装：npm install -g @anthropic-ai/claude-code\n',
   docsLabel: '文档:',
   menuPrompt: '你要做哪一步？',
-  menuConfigure: '>  ① 配置 API Key — 选厂家、填密钥，并设为默认',
-  menuApply: '>  ② 同步到 Claude Code — 写入全局 settings.json',
-  menuCheck: '>  ③ 运行检查 — 网络与配置是否就绪',
+  menuConfigure: '>  1. 配置 API Key — 选厂家、填密钥，并设为默认',
+  menuApply: '>  2. 同步到 Claude Code — 写入全局 settings.json',
+  menuCheck: '>  3. 运行检查 — 网络与配置是否就绪',
   menuLanguage: '>  语言 / Language — 切换中英文引导',
   menuExit: 'x   退出',
   goodbyeLong: '\n再见。需要时可随时再运行：claude-helper 或 claude-helper init\n',
   goodbye: '\n再见。\n',
   sectionChecking: '正在检查',
   afterCheckPrompt: '检查结束，接下来？',
+  wizardCheckVerboseHint: '（完整报告：claude-helper check --verbose）',
   backMenu: '<-  返回主菜单',
   exitWizard: 'x   退出向导',
-  applyBlocked: '\n还不能同步：还没有「默认供应商」或没填 API Key。\n请先选上面的 ① 完成配置。\n',
+  applyBlocked: '\n还不能同步：还没有「默认供应商」或没填 API Key。\n请先选上面的 1. 完成配置。\n',
   confirmWrite: '确认写入？（会合并 env，并备份原 settings.json）',
   confirmWriteShort: '确认写入？（合并 env，备份原 settings.json）',
   writeConfirmYes: '>  确认写入',
@@ -249,6 +264,16 @@ const zh: WizardCopy = {
     settingsSyncUnreadable: '✗ 无法读取或解析 ~/.claude/settings.json，请手动检查 JSON。',
     settingsSyncSkipped: '○ 无默认供应商或缺少 Key / Anthropic Base，跳过与 settings.json 的对比。',
     settingsSyncFootnote: '   （若你手动改过 settings，也可能显示不一致；以 claude-helper 计算的 env 为准。）\n',
+    titleCompact: '\n── 健康检查 ──',
+    probeSpinner: '正在探测 Anthropic 兼容端点…',
+    settingsSyncAlignedCompact: 'settings 已对齐',
+    settingsSyncDriftCompactTpl: 'settings 不一致 ($KEYS)',
+    settingsSyncNoFileCompact: '尚无 settings.json',
+    settingsSyncUnreadableCompact: 'settings 无法解析',
+    settingsSyncSkippedCompact: '未对比 settings',
+    compactHelpNeedKey: '→ claude-helper set <id> --key … · claude-helper active <id>（见 claude-helper --help）',
+    compactHelpApply: '→ claude-helper claude apply  →  终端运行 claude',
+    compactHelpFix: '→ claude-helper set $ID --anthropic-base <URL> · claude-helper claude apply',
   },
 };
 
@@ -268,7 +293,7 @@ const en: WizardCopy = {
   statusTitle: 'Current configuration',
   statusDefault: 'Default provider: ',
   statusNotChosen: 'Not set',
-  statusSuggest: '(complete step ① first)',
+  statusSuggest: '(configure API Key first — option 1)',
   statusApiKey: 'API Key: ',
   statusFootnote: '  └ Until you sync, Claude Code may still use old settings or env vars',
   statusSettingsSyncTitle: 'vs ~/.claude/settings.json: ',
@@ -294,19 +319,20 @@ const en: WizardCopy = {
   doneInstall: '  Not installed? npm install -g @anthropic-ai/claude-code\n',
   docsLabel: 'Docs:',
   menuPrompt: 'What would you like to do?',
-  menuConfigure: '>  ① Configure API Key — pick provider, enter key, set as default',
-  menuApply: '>  ② Sync to Claude Code — write global settings.json',
-  menuCheck: '>  ③ Run checks — network & config readiness',
+  menuConfigure: '>  1. Configure API Key — pick provider, enter key, set as default',
+  menuApply: '>  2. Sync to Claude Code — write global settings.json',
+  menuCheck: '>  3. Run checks — network & config readiness',
   menuLanguage: '>  Language — switch Chinese / English UI',
   menuExit: 'x   Exit',
   goodbyeLong: '\nBye. Run claude-helper or claude-helper init anytime.\n',
   goodbye: '\nBye.\n',
   sectionChecking: 'Running checks',
   afterCheckPrompt: 'Checks done. What next?',
+  wizardCheckVerboseHint: '(Full report: claude-helper check --verbose)',
   backMenu: '<-  Back to main menu',
   exitWizard: 'x   Exit wizard',
   applyBlocked:
-    '\nCannot sync yet: no default provider or missing API Key.\nComplete step ① first.\n',
+    '\nCannot sync yet: no default provider or missing API Key.\nComplete option 1 first (configure API Key).\n',
   confirmWrite: 'Write merged env to Claude Code config? (backs up existing settings.json)',
   confirmWriteShort: 'Confirm write? (merge env, backup settings.json)',
   writeConfirmYes: '>  Confirm write',
@@ -365,6 +391,16 @@ const en: WizardCopy = {
     settingsSyncUnreadable: '✗ Could not read or parse ~/.claude/settings.json.',
     settingsSyncSkipped: '○ Skipping settings compare (no default provider or missing key / Anthropic base).',
     settingsSyncFootnote: '   (Manual edits to settings may also show as drift; claude-helper env is the reference.)\n',
+    titleCompact: '\n── Health check ──',
+    probeSpinner: 'Probing Anthropic-compatible endpoint…',
+    settingsSyncAlignedCompact: 'settings aligned',
+    settingsSyncDriftCompactTpl: 'settings drift ($KEYS)',
+    settingsSyncNoFileCompact: 'no settings.json',
+    settingsSyncUnreadableCompact: 'settings unreadable',
+    settingsSyncSkippedCompact: 'settings compare skipped',
+    compactHelpNeedKey: '→ claude-helper set <id> --key … · claude-helper active <id> (see claude-helper --help)',
+    compactHelpApply: '→ claude-helper claude apply  →  run claude in terminal',
+    compactHelpFix: '→ claude-helper set $ID --anthropic-base <URL> · claude-helper claude apply',
   },
 };
 

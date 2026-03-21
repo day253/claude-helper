@@ -18,7 +18,7 @@
 # 全局
 npm install -g claude-helper
 
-# 或免安装
+# 或免安装（首次解析包可能较慢，可改用全局安装）
 npx claude-helper --help
 ```
 
@@ -70,9 +70,12 @@ eval "$(claude-helper export)"
 
 ```bash
 claude-helper check
+claude-helper check --verbose     # 完整详情（脚注、文档链接等）
 claude-helper doctor              # 与 check 相同（习惯 chelper doctor 时可用）
 claude-helper check --json        # 机器可读，便于脚本
 ```
+
+默认 **精简** 输出；向导主菜单里的「运行检查」与上相同，结束后会提示可用 `--verbose` 查看完整报告。
 
 ---
 

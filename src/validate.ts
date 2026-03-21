@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import ora from 'ora';
 import {
   buildClaudeEnv,
   claudeSettingsPath,
@@ -12,6 +13,12 @@ import { tpl, type WizardLang, wizardCopy } from './wizard-locale.js';
 
 const PROBE_TIMEOUT_MS = 8000;
 const UA = 'claude-helper/check';
+
+const CHECK_COMPACT_GAP_MS = 100;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 export async function probeUrl(
   url: string,
@@ -63,18 +70,37 @@ type Gathered = {
   probeUrlUsed: string | null;
   canBuildClaude: boolean;
   sync: ClaudeSettingsEnvCompare;
+  /** 已由 ora 展示探测过程，精简输出中避免重复长 detail */
+  probeShownBySpinner: boolean;
 };
 
-async function gatherCheckDiagnostics(cfg: ConfigFile, lang: WizardLang): Promise<Gathered> {
+async function gatherCheckDiagnostics(
+  cfg: ConfigFile,
+  lang: WizardLang,
+  opts?: { probeSpinner?: boolean },
+): Promise<Gathered> {
+  const c = wizardCopy(lang).check;
   const withKey = PROVIDER_IDS.filter((id) => cfg.providers[id]?.api_key?.trim());
   const active = cfg.active_provider ?? null;
   const entry = active ? cfg.providers[active] : undefined;
   const claudeBase = active ? effectiveClaudeBase(active, entry) : undefined;
   let probeResult: { ok: boolean; detail: string } | null = null;
   let probeUrlUsed: string | null = null;
+  let probeShownBySpinner = false;
   if (claudeBase) {
     probeUrlUsed = claudeBase;
-    probeResult = await probeUrl(claudeBase, lang);
+    if (opts?.probeSpinner) {
+      probeShownBySpinner = true;
+      const spinner = ora({ text: c.probeSpinner, spinner: 'dots' }).start();
+      probeResult = await probeUrl(claudeBase, lang);
+      if (probeResult.ok) {
+        spinner.succeed(probeResult.detail);
+      } else {
+        spinner.fail(probeResult.detail);
+      }
+    } else {
+      probeResult = await probeUrl(claudeBase, lang);
+    }
   }
   let canBuildClaude = false;
   if (claudeBase && active && entry?.api_key?.trim()) {
@@ -95,6 +121,7 @@ async function gatherCheckDiagnostics(cfg: ConfigFile, lang: WizardLang): Promis
     probeUrlUsed,
     canBuildClaude,
     sync,
+    probeShownBySpinner,
   };
 }
 
@@ -171,20 +198,196 @@ export function formatSettingsSyncSummary(
   }
 }
 
+function formatCompactSyncPart(lang: WizardLang, sync: ClaudeSettingsEnvCompare): string {
+  const c = wizardCopy(lang).check;
+  switch (sync.kind) {
+    case 'aligned':
+      return chalk.green(c.settingsSyncAlignedCompact);
+    case 'drift':
+      return chalk.yellow(
+        tpl(c.settingsSyncDriftCompactTpl, {
+          KEYS: sync.keys.join(lang === 'zh' ? '、' : ', '),
+        }),
+      );
+    case 'no_file':
+      return chalk.yellow(c.settingsSyncNoFileCompact);
+    case 'unreadable':
+      return chalk.red(c.settingsSyncUnreadableCompact);
+    case 'skipped':
+      return chalk.dim(c.settingsSyncSkippedCompact);
+    default:
+      return '';
+  }
+}
+
+function printClaudeHelp(
+  cfg: ConfigFile,
+  hasActiveKey: boolean,
+  canApply: boolean,
+  lang: WizardLang,
+): void {
+  const c = wizardCopy(lang).check;
+  console.log(chalk.bold(c.startTitle));
+  const active = cfg.active_provider;
+  const entry = active ? cfg.providers[active] : undefined;
+
+  if (!hasActiveKey || !active || !entry?.api_key?.trim()) {
+    console.log(chalk.cyan(c.startNeedKey));
+    console.log(chalk.dim(c.startDoc));
+    console.log(chalk.dim(c.startCheck));
+    return;
+  }
+
+  if (canApply) {
+    console.log(
+      chalk.cyan(`${c.startApply1}${claudeSettingsPath()}${c.startApply2}${chalk.bold('claude-helper claude apply')}`),
+    );
+    console.log(
+      chalk.cyan(
+        `2) ${lang === 'zh' ? '在终端启动 Claude Code（若已安装 CLI）：' : 'Start Claude Code in terminal (if CLI installed):'}\n   ${chalk.bold('claude')}`,
+      ),
+    );
+    console.log(chalk.dim(c.startApplyNote));
+    return;
+  }
+
+  console.log(
+    chalk.yellow(
+      tpl(c.startFixTpl, {
+        ID: active,
+      }),
+    ),
+  );
+  console.log(chalk.dim(c.startReadme));
+}
+
+function printClaudeHelpCompact(
+  cfg: ConfigFile,
+  hasActiveKey: boolean,
+  canApply: boolean,
+  lang: WizardLang,
+): void {
+  const c = wizardCopy(lang).check;
+  const active = cfg.active_provider;
+  const entry = active ? cfg.providers[active] : undefined;
+
+  if (!hasActiveKey || !active || !entry?.api_key?.trim()) {
+    console.log(chalk.cyan(c.compactHelpNeedKey));
+    return;
+  }
+
+  if (canApply) {
+    console.log(chalk.cyan(c.compactHelpApply));
+    return;
+  }
+
+  console.log(chalk.yellow(tpl(c.compactHelpFix, { ID: String(active) })));
+}
+
+async function validatePrintCompact(cfg: ConfigFile, lang: WizardLang, d: Gathered): Promise<void> {
+  const c = wizardCopy(lang).check;
+  const gap = async () => sleep(CHECK_COMPACT_GAP_MS);
+
+  console.log(chalk.bold(c.titleCompact));
+  await gap();
+
+  if (d.withKey.length === 0) {
+    console.log(chalk.yellow(c.noKeys));
+    printClaudeHelpCompact(cfg, false, false, lang);
+    return;
+  }
+
+  console.log(chalk.green(`${c.savedWithKey}${d.withKey.join(lang === 'zh' ? '、' : ', ')}`));
+  await gap();
+
+  if (!d.active) {
+    console.log(chalk.yellow(c.noActive));
+    printClaudeHelpCompact(cfg, false, false, lang);
+    return;
+  }
+
+  if (!d.entry?.api_key?.trim()) {
+    console.log(
+      chalk.yellow(
+        tpl(c.activeNoKeyTpl, {
+          LABEL: PROVIDERS[d.active].label,
+          ID: d.active,
+        }),
+      ),
+    );
+    printClaudeHelpCompact(cfg, false, false, lang);
+    return;
+  }
+
+  const activePart = `${PROVIDERS[d.active].label} (${d.active})`;
+
+  let probePart: string;
+  if (d.claudeBase && d.probeResult) {
+    if (d.probeShownBySpinner) {
+      probePart = d.probeResult.ok
+        ? chalk.green(lang === 'zh' ? '端点 OK' : 'Endpoint OK')
+        : chalk.red(lang === 'zh' ? '端点失败' : 'Endpoint failed');
+    } else {
+      const mark = d.probeResult.ok ? chalk.green('✓') : chalk.red('✗');
+      probePart = `${mark} ${d.probeResult.detail}`;
+    }
+  } else {
+    probePart = chalk.yellow(tpl(c.noAnthropicBaseTpl, { ID: d.active }));
+  }
+
+  let envPart = '';
+  if (d.claudeBase) {
+    envPart = d.canBuildClaude
+      ? chalk.green(lang === 'zh' ? 'env OK' : 'env OK')
+      : chalk.red(lang === 'zh' ? 'env 失败' : 'env fail');
+  }
+
+  const syncPart = formatCompactSyncPart(lang, d.sync);
+
+  console.log(
+    chalk.dim('  ') +
+      chalk.cyan(activePart) +
+      chalk.dim(' · ') +
+      probePart +
+      (envPart ? chalk.dim(' · ') + envPart : '') +
+      (syncPart ? chalk.dim(' · ') + syncPart : ''),
+  );
+
+  if (d.claudeBase && d.probeResult && !d.probeResult.ok) {
+    console.log(chalk.dim(c.proxyHint));
+  }
+
+  await gap();
+  printClaudeHelpCompact(cfg, true, d.canBuildClaude, lang);
+}
+
+export type ValidateAfterSaveOptions = {
+  json?: boolean;
+  ui?: 'default' | 'check';
+  verbose?: boolean;
+};
+
 /**
  * 保存配置后自动调用：结构检查 + 默认供应商端点探测 + settings 对齐 + 启动 Claude 提示
  */
 export async function validateAfterSave(
   cfg: ConfigFile,
   langOverride?: WizardLang,
-  options?: { json?: boolean },
+  options?: ValidateAfterSaveOptions,
 ): Promise<void> {
   const lang = resolveCheckLang(cfg, langOverride);
   const c = wizardCopy(lang).check;
-  const d = await gatherCheckDiagnostics(cfg, lang);
+  const probeSpinner = options?.ui === 'check' && !options?.json;
+  const d = await gatherCheckDiagnostics(cfg, lang, { probeSpinner });
 
   if (options?.json) {
     console.log(JSON.stringify(toJsonReport(d), null, 2));
+    return;
+  }
+
+  const compact = options?.ui === 'check' && !options?.verbose;
+  if (compact) {
+    await validatePrintCompact(cfg, lang, d);
     return;
   }
 
@@ -243,45 +446,4 @@ export async function validateAfterSave(
 
   printSettingsSyncBlock(lang, d.sync);
   printClaudeHelp(cfg, true, d.canBuildClaude, lang);
-}
-
-function printClaudeHelp(
-  cfg: ConfigFile,
-  hasActiveKey: boolean,
-  canApply: boolean,
-  lang: WizardLang,
-): void {
-  const c = wizardCopy(lang).check;
-  console.log(chalk.bold(c.startTitle));
-  const active = cfg.active_provider;
-  const entry = active ? cfg.providers[active] : undefined;
-
-  if (!hasActiveKey || !active || !entry?.api_key?.trim()) {
-    console.log(chalk.cyan(c.startNeedKey));
-    console.log(chalk.dim(c.startDoc));
-    console.log(chalk.dim(c.startCheck));
-    return;
-  }
-
-  if (canApply) {
-    console.log(
-      chalk.cyan(`${c.startApply1}${claudeSettingsPath()}${c.startApply2}${chalk.bold('claude-helper claude apply')}`),
-    );
-    console.log(
-      chalk.cyan(
-        `2) ${lang === 'zh' ? '在终端启动 Claude Code（若已安装 CLI）：' : 'Start Claude Code in terminal (if CLI installed):'}\n   ${chalk.bold('claude')}`,
-      ),
-    );
-    console.log(chalk.dim(c.startApplyNote));
-    return;
-  }
-
-  console.log(
-    chalk.yellow(
-      tpl(c.startFixTpl, {
-        ID: active,
-      }),
-    ),
-  );
-  console.log(chalk.dim(c.startReadme));
 }
