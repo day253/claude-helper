@@ -2,7 +2,7 @@
 
 面向 **Claude Code** 与 **OpenAI 兼容客户端**：在本地保存多家供应商的 **API Key**，交互时提示 **去哪里申请密钥**，并做 **网络检查**、**导出环境变量** 或 **合并写入** `~/.claude/settings.json`。
 
-**技术设计**：[technical-guide-zh.md](./technical-guide-zh.md) · **厂商文档索引**：[vendor-docs-zh.md](./vendor-docs-zh.md) · **使用指南**（精简）：仓库根目录 [README.md](../README.md)
+**技术设计**：[technical-guide-zh.md](./technical-guide-zh.md) · **厂商文档索引**：[vendor-docs-zh.md](./vendor-docs-zh.md) · **使用指南**（精简）：中文 [README.zh-CN.md](../README.zh-CN.md) · English [README.md](../README.md)
 
 智谱 **GLM 编码套餐**：[一键安装助手](https://docs.bigmodel.cn/cn/coding-plan/extension/coding-tool-helper#) · [Claude Code 专页](https://docs.bigmodel.cn/cn/coding-plan/tool/claude)。MiniMax：[Claude Code 接入](https://platform.minimax.io/docs/token-plan/claude-code)。**Claude Helper** 不替代官方装机向导（`npx @z_ai/coding-helper`），只做 **Key**、**检查**、**export** / **`claude apply`**；更多链接见 [vendor-docs-zh.md](./vendor-docs-zh.md)。
 
@@ -10,7 +10,7 @@
 
 ## 近期版本摘要（0.6.x）
 
-**0.6.4**：根目录 **README** 改为**使用指南**；原长文迁至 **[overview-zh.md](./overview-zh.md)**（本页），并更新 technical / vendor 文档交叉引用。
+**0.6.4**：根目录 **README** 改为**使用指南**；原长文迁至 **[overview-zh.md](./overview-zh.md)**（本页），并更新 technical / vendor 文档交叉引用。主页 **README.md** 为英文时，中文使用指南见 **[README.zh-CN.md](../README.zh-CN.md)**。
 
 **0.6.3**：借鉴 coding-helper 的 **💡 列表前提示**、`<-` / `x   ` 导航样式、语言 **当前项 ✓**；**首次无 Key** 短路径直进配置；主菜单展示 **settings.json 与本地默认供应商**对齐摘要；`check` 增加 **`--json`**；**`doctor`** 同 `check`。
 

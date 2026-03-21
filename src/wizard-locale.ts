@@ -266,7 +266,7 @@ const zh: WizardCopy = {
       '   官方文档：https://docs.anthropic.com/en/docs/claude-code/overview\n   若只想临时生效当前终端：claude-helper claude export 后 eval 打印的内容\n',
     startFixTpl:
       '无法组合 Claude 环境变量。请检查 Key 与 Base，或尝试：\n   claude-helper set $ID --anthropic-base <Anthropic base URL>\n   claude-helper claude apply\n',
-    startReadme: '   详见 README 与 doc/technical-guide-zh.md\n',
+    startReadme: '   详见 README.zh-CN.md / README.md 与 doc/technical-guide-zh.md\n',
     settingsSyncTitle: '\n── Claude Code settings.json ──',
     settingsSyncAligned: '✓ ~/.claude/settings.json 中的 ANTHROPIC_* 与当前默认供应商一致（已同步）。',
     settingsSyncDriftTpl:

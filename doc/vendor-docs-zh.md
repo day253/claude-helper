@@ -54,6 +54,6 @@
 
 ## 维护说明
 
-新增供应商时：在本表增加一行，并在 [overview-zh.md](./overview-zh.md) 的供应商示例表（若仍保留该段）、根目录 [README.md](../README.md)（使用指南中若提及新 id）与 `src/providers.ts` 中保持 **Anthropic 根 URL** 与官方文档一致；若文档要求额外 `env` 键，使用 `ProviderMeta.claudeExtraEnv`，以便 `claude apply` 切换供应商时正确清理残留键。
+新增供应商时：在本表增加一行，并在 [overview-zh.md](./overview-zh.md) 的供应商示例表（若仍保留该段）、根目录 [README.zh-CN.md](../README.zh-CN.md) / [README.md](../README.md)（使用指南中若提及新 id）与 `src/providers.ts` 中保持 **Anthropic 根 URL** 与官方文档一致；若文档要求额外 `env` 键，使用 `ProviderMeta.claudeExtraEnv`，以便 `claude apply` 切换供应商时正确清理残留键。
 
 **未收录**：无厂商官方「Claude Code + 明确 `ANTHROPIC_BASE_URL`」文档的渠道（如仅社区代理、仅 OpenAI 兼容等），不写入内置列表，避免误导。

@@ -1,7 +1,7 @@
 {
   "name": "claude-helper",
   "version": "0.6.7",
-  "description": "Claude Helper：多供应商 API Key 向导、检查与写入 Claude Code settings.json",
+  "description": "Multi-provider API key wizard, health checks, and merge into Claude Code settings.json (ANTHROPIC_*)",
   "license": "MIT",
   "keywords": [
     "claude",
@@ -15,6 +15,7 @@
   "files": [
     "dist",
     "README.md",
+    "README.zh-CN.md",
     "LICENSE"
   ],
   "repository": {

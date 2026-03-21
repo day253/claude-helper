@@ -2,7 +2,7 @@
 
 > 本文档面向技术分享与维护，侧重架构、数据流与实现细节。适用于代码评审、新贡献者上手或与 [openclaw-cursor-brain 技术文档](https://github.com/andeya/openclaw-cursor-brain/blob/main/doc/technical-guide-zh.md) 同级的内部对齐。
 
-**使用指南**（安装与日常命令）：仓库根目录 [README.md](../README.md)。**项目说明**（定位、迁移、发布）：[overview-zh.md](./overview-zh.md)。**厂商官方文档索引**：[vendor-docs-zh.md](./vendor-docs-zh.md)。
+**使用指南**（安装与日常命令）：中文 [README.zh-CN.md](../README.zh-CN.md) · English [README.md](../README.md)。**项目说明**（定位、迁移、发布）：[overview-zh.md](./overview-zh.md)。**厂商官方文档索引**：[vendor-docs-zh.md](./vendor-docs-zh.md)。
 
 ---
 
@@ -56,7 +56,8 @@
 claude-helper/   # 仓库目录名可与包名不同
 ├── package.json
 ├── tsconfig.json
-├── README.md                 # 使用指南（安装、常用流程、命令速查）
+├── README.md                 # 使用指南（英文）
+├── README.zh-CN.md           # 使用指南（简体中文）
 ├── doc/
 │   ├── overview-zh.md        # 项目说明、与官方助手差异、开发/发布/GitHub
 │   ├── technical-guide-zh.md # 本文档
@@ -299,7 +300,7 @@ npm link   # 可选：全局 claude-helper
 
 ## 第 7 章：使用指南
 
-> 面向终端用户的安装与命令速查以根目录 **[README.md](../README.md)** 为准；本章保留典型流程与故障排查，便于与架构说明对照。
+> 面向终端用户的安装与命令速查以根目录 **[README.zh-CN.md](../README.zh-CN.md)**（中文）与 **[README.md](../README.md)**（English）为准；本章保留典型流程与故障排查，便于与架构说明对照。
 
 ### 7.1 典型流程：Claude Code + 智谱
 
@@ -381,7 +382,7 @@ npm run debug -- list
 
 1. 在 `ProviderId` 与 `PROVIDERS` 中增加条目（须已核实 **Anthropic 兼容根 URL**）。
 2. 填写 `keyHelp`、`defaultBaseUrl`、`docs`、**必填** `claudeAnthropicBaseUrl`，按需 `claudeUseAuthToken`、`claudeExtraEnv`。
-3. 更新 [overview-zh.md](./overview-zh.md) 中的供应商示例表（若有）与本文档相关章节；若新 id 需在面向用户的速查中体现，可同步根目录 [README.md](../README.md)。
+3. 更新 [overview-zh.md](./overview-zh.md) 中的供应商示例表（若有）与本文档相关章节；若新 id 需在面向用户的速查中体现，可同步根目录 [README.zh-CN.md](../README.zh-CN.md) 与 [README.md](../README.md)。
 4. `npm run build` 通过后提交。
 
 ### 8.3 设计原则（与 openclaw 文档对齐的表述）
