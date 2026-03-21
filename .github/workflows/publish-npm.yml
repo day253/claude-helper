@@ -10,6 +10,11 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # 使用 Environment「npm」：NPM_TOKEN 建在环境 Secret 中（也可与仓库 Secret 同名并存，环境优先）
+    # 文档：https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/claude-helper
     permissions:
       contents: read
     steps:
@@ -21,7 +26,10 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           if [ -z "$NPM_TOKEN" ]; then
-            echo "::error::缺少仓库 Secret「NPM_TOKEN」。请到 GitHub：Settings → Secrets and variables → Actions → New repository secret，名称填写 NPM_TOKEN，值为 npm 网站生成的 token（Automation 或具备 Publish 的 Granular token）。"
+            echo "::error::缺少 NPM_TOKEN。请在 GitHub 任选其一配置（名称均为 NPM_TOKEN）："
+            echo "::error::1) Settings → Environments → npm → Environment secrets（推荐，可与审批/标签规则配合）"
+            echo "::error::2) Settings → Secrets and variables → Actions → Repository secrets"
+            echo "::error::Token：npm → Access Tokens → Automation 或具备 Publish 的 Granular token。"
             exit 1
           fi
 
