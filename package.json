@@ -1,6 +1,6 @@
 {
   "name": "claude-helper",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "description": "Claude Helper：多供应商 API Key 向导、检查与写入 Claude Code settings.json",
   "license": "MIT",
   "keywords": [
