@@ -9,6 +9,7 @@
 | [doc/overview-zh.md](doc/overview-zh.md) | 项目说明、与官方助手差异、供应商表、开发/发布/GitHub |
 | [doc/vendor-docs-zh.md](doc/vendor-docs-zh.md) | 各厂商文档链接与内置 Base |
 | [doc/technical-guide-zh.md](doc/technical-guide-zh.md) | 模块与数据流（给维护者） |
+| [doc/github-npm-publish-zh.md](doc/github-npm-publish-zh.md) | 用 GitHub Actions + 标签自动发布 npm |
 
 ---
 

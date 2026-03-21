@@ -49,6 +49,8 @@ GitHub 旧仓库 URL 一般会重定向到新名一段时间。
 3. 执行 `npm whoami` 确认已登录。
 4. 在本仓库根目录：`npm publish`（`prepublishOnly` 会先 `npm run build`；`package.json` 的 **`files`** 已包含 `dist/`，与 `.gitignore` 无关，避免空包）。
 
+**CI 发版（推荐）**：在 GitHub 配置 Secret `NPM_TOKEN`，将 `package.json` 版本 bump 并提交后，推送标签 `git push origin vX.Y.Z`（与 `version` 一致），由 Actions 执行 `npm publish`。步骤与流程图见 [github-npm-publish-zh.md](./github-npm-publish-zh.md)。
+
 ## 供应商与 Claude Code 一键 apply
 
 下表仅举例；**全部内置 id、官方文档与默认 Base** 见 [vendor-docs-zh.md](./vendor-docs-zh.md) 与 `src/providers.ts`。
