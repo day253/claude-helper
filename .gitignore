@@ -1,5 +1,7 @@
 node_modules/
 dist/
+# Cursor 本地规则与配置，勿提交
+.cursor/
 *.log
 .claude/
 # 本地 npm token，勿提交
