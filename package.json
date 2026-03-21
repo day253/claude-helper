@@ -1,7 +1,7 @@
 {
   "name": "claude-helper",
   "version": "0.6.8",
-  "description": "Claude Code configuration wizard—helps you pick a provider and set your API key. Claude Code 配置向导：帮你选择供应商并配置 API Key。",
+  "description": "Claude Code configuration wizard—you choose the provider, then guided steps for your API key. Claude Code 配置向导：由你选择供应商，再引导你配置 API Key。",
   "license": "MIT",
   "keywords": [
     "claude",
