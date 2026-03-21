@@ -1,6 +1,10 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import {
+  getClaudeCodeSemverSync,
+  zhipuClaudeCodeNeedsExperimentalBetasWorkaround,
+} from './claude-code-version.js';
 import { PROVIDERS, PROVIDER_IDS, type ProviderId } from './providers.js';
 import type { ConfigFile, ProviderEntry } from './store.js';
 
@@ -56,6 +60,13 @@ export function buildClaudeEnv(id: ProviderId, e: ProviderEntry): Record<string,
     if (meta.claudeExtraEnv?.CLAUDE_CODE_SUBAGENT_MODEL !== undefined) {
       out.CLAUDE_CODE_SUBAGENT_MODEL = model;
     }
+  }
+  if (
+    (id === 'glm' || id === 'zai') &&
+    zhipuClaudeCodeNeedsExperimentalBetasWorkaround(getClaudeCodeSemverSync())
+  ) {
+    out.ENABLE_TOOL_SEARCH = '0';
+    out.CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS = '1';
   }
   return out;
 }

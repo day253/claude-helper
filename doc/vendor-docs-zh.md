@@ -48,6 +48,8 @@
 | 环境变量说明 | [Environment variables](https://code.claude.com/docs/en/env-vars) |
 | 第三方 / 企业部署概览 | [Third-party integrations](https://docs.anthropic.com/en/docs/claude-code/third-party-integrations) |
 
+**智谱 / Z.AI（glm、zai）与 Claude Code 2.1.69+**：官方说明部分版本需 `ENABLE_TOOL_SEARCH=0` 与 `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1`。本工具在 `claude apply` / `claude export` / `check` 生成 env 时，若本机可执行 `claude --version` 且解析为 **2.1.69 ≤ 版本 < 2.2.0**，会自动写入上述键；未安装 CLI 或版本不在该区间则不写入。详见 [智谱 · Claude Code](https://docs.bigmodel.cn/cn/coding-plan/tool/claude) 常见问题。
+
 ---
 
 ## 维护说明
