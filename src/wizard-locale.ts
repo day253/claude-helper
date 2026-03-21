@@ -60,6 +60,11 @@ export type CheckCopy = {
   compactHelpNeedKey: string;
   compactHelpApply: string;
   compactHelpFix: string;
+  /** 多模型 POST 探测块标题 */
+  tryModelsTitle: string;
+  tryModelsProbing: string;
+  tryModelsNoActive: string;
+  tryModelsFootnote: string;
 };
 
 export type WizardCopy = {
@@ -114,6 +119,10 @@ export type WizardCopy = {
   goodbye: string;
   sectionChecking: string;
   afterCheckPrompt: string;
+  /** 检查后出现 drift/no_file 时的快捷项 */
+  afterCheckApplyNow: string;
+  /** 检查后发现未配置 Key / 默认时的快捷项 */
+  afterCheckConfigureNow: string;
   /** 向导内「检查」为精简输出时，提示可查看完整报告 */
   wizardCheckVerboseHint: string;
   backMenu: string;
@@ -200,7 +209,9 @@ const zh: WizardCopy = {
   goodbyeLong: '\n再见。需要时可随时再运行：claude-helper 或 claude-helper init\n',
   goodbye: '\n再见。\n',
   sectionChecking: '正在检查',
-  afterCheckPrompt: '检查结束，接下来？',
+  afterCheckPrompt: '根据上面结果，下一步？',
+  afterCheckApplyNow: '>  同步到 Claude Code（按当前检查写入 settings）',
+  afterCheckConfigureNow: '>  配置 API Key（选厂家、填 Key、设默认）',
   wizardCheckVerboseHint: '（完整报告：claude-helper check --verbose）',
   backMenu: '<-  返回主菜单',
   exitWizard: 'x   退出向导',
@@ -274,6 +285,11 @@ const zh: WizardCopy = {
     compactHelpNeedKey: '→ claude-helper set <id> --key … · claude-helper active <id>（见 claude-helper --help）',
     compactHelpApply: '→ claude-helper claude apply  →  终端运行 claude',
     compactHelpFix: '→ claude-helper set $ID --anthropic-base <URL> · claude-helper claude apply',
+    tryModelsTitle: '\n── 模型可用性（Anthropic /v1/messages）──',
+    tryModelsProbing: '正在请求',
+    tryModelsNoActive: '无默认供应商、API Key 或 Anthropic Base，跳过模型探测。',
+    tryModelsFootnote:
+      '   （各厂商网关路径/鉴权可能不同；若全部失败请对照官方文档或改用 claude-helper set <id> --model）',
   },
 };
 
@@ -327,7 +343,9 @@ const en: WizardCopy = {
   goodbyeLong: '\nBye. Run claude-helper or claude-helper init anytime.\n',
   goodbye: '\nBye.\n',
   sectionChecking: 'Running checks',
-  afterCheckPrompt: 'Checks done. What next?',
+  afterCheckPrompt: 'Based on the results above, what next?',
+  afterCheckApplyNow: '>  Sync to Claude Code (write settings from current check)',
+  afterCheckConfigureNow: '>  Configure API Key (provider, key, set default)',
   wizardCheckVerboseHint: '(Full report: claude-helper check --verbose)',
   backMenu: '<-  Back to main menu',
   exitWizard: 'x   Exit wizard',
@@ -401,6 +419,11 @@ const en: WizardCopy = {
     compactHelpNeedKey: '→ claude-helper set <id> --key … · claude-helper active <id> (see claude-helper --help)',
     compactHelpApply: '→ claude-helper claude apply  →  run claude in terminal',
     compactHelpFix: '→ claude-helper set $ID --anthropic-base <URL> · claude-helper claude apply',
+    tryModelsTitle: '\n── Model probe (Anthropic /v1/messages) ──',
+    tryModelsProbing: 'Requesting',
+    tryModelsNoActive: 'No default provider, API key, or Anthropic base; skipping model probes.',
+    tryModelsFootnote:
+      '   (Gateways differ; if all fail, check vendor docs or: claude-helper set <id> --model)',
   },
 };
 

@@ -236,7 +236,7 @@ Claude Code 需要 **Anthropic Messages** 兼容端点。仅 OpenAI 兼容、无
 | 导出 | 说明 |
 |------|------|
 | `probeUrl` | `fetch` + 超时，用于判断 API 根路径是否可达（不校验厂商鉴权） |
-| `validateAfterSave` | 汇总诊断后输出：已填 Key、默认供应商、Anthropic 根探测、`buildClaudeEnv` 结果、**settings 对齐块**、启动步骤；第三参数 `{ json: true }` 时输出 `CheckReportJson` 并跳过人读文案 |
+| `validateAfterSave` | 汇总诊断后输出：已填 Key、默认供应商、Anthropic 根探测、`buildClaudeEnv` 结果、**settings 对齐块**、启动步骤；`{ json: true }` 时输出 `CheckReportJson` 并返回 `undefined`；否则返回 `CheckGathered` 供向导根据 sync 等给出下一步选项 |
 | `formatSettingsSyncSummary` | 供主菜单 `printWizardStatus` 一行摘要（颜色 variant + 纯文本） |
 | `CheckReportJson` | `check --json` / `doctor --json` 的结构化字段 |
 

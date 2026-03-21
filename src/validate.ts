@@ -12,6 +12,8 @@ import type { ConfigFile, ProviderEntry } from './store.js';
 import { tpl, type WizardLang, wizardCopy } from './wizard-locale.js';
 
 const PROBE_TIMEOUT_MS = 8000;
+/** 单模型 POST /v1/messages 探测超时（可能含首 token 延迟） */
+const MODEL_PROBE_TIMEOUT_MS = 25000;
 const UA = 'claude-helper/check';
 
 const CHECK_COMPACT_GAP_MS = 100;
@@ -45,9 +47,111 @@ export async function probeUrl(
   }
 }
 
+async function anthropicProbeErrorDetail(res: Response): Promise<string> {
+  const st = res.status;
+  const t = await res.text();
+  let extra = '';
+  try {
+    const j = JSON.parse(t) as { error?: { message?: string }; message?: string };
+    extra = (j.error?.message ?? j.message ?? '').trim();
+  } catch {
+    extra = t.trim().slice(0, 160);
+  }
+  return extra ? `HTTP ${st} · ${extra.slice(0, 220)}` : `HTTP ${st}`;
+}
+
+/**
+ * 对当前供应商 Anthropic 根发起最小 `POST .../v1/messages`（max_tokens=1），用于批量试模型 ID（如 glm-4.7 / glm-5）。
+ * 鉴权：`claudeUseAuthToken !== false` 时先试 Bearer，401 再试 `x-api-key`。
+ */
+export async function probeAnthropicModelId(
+  id: ProviderId,
+  entry: ProviderEntry,
+  modelId: string,
+  lang: WizardLang,
+): Promise<{ ok: boolean; detail: string }> {
+  const base = effectiveClaudeBase(id, entry);
+  if (!base) {
+    return { ok: false, detail: lang === 'zh' ? '无 Anthropic Base' : 'No Anthropic base' };
+  }
+  const key = entry.api_key?.trim();
+  if (!key) {
+    return { ok: false, detail: lang === 'zh' ? '无 API Key' : 'No API key' };
+  }
+  const meta = PROVIDERS[id];
+  const url = `${base.replace(/\/$/, '')}/v1/messages`;
+  const body = JSON.stringify({
+    model: modelId.trim(),
+    max_tokens: 1,
+    messages: [{ role: 'user', content: 'ping' }],
+  });
+  const baseHeaders: Record<string, string> = {
+    'content-type': 'application/json',
+    'anthropic-version': '2023-06-01',
+    'User-Agent': UA,
+  };
+  const useBearer = meta.claudeUseAuthToken !== false;
+  const headersBearer: Record<string, string> = {
+    ...baseHeaders,
+    authorization: `Bearer ${key}`,
+  };
+  const headersApiKey: Record<string, string> = {
+    ...baseHeaders,
+    'x-api-key': key,
+  };
+  const initialHeaders = useBearer ? headersBearer : headersApiKey;
+
+  try {
+    let res = await fetch(url, {
+      method: 'POST',
+      headers: initialHeaders,
+      body,
+      signal: AbortSignal.timeout(MODEL_PROBE_TIMEOUT_MS),
+    });
+    if (res.status === 401 && useBearer) {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: headersApiKey,
+        body,
+        signal: AbortSignal.timeout(MODEL_PROBE_TIMEOUT_MS),
+      });
+    }
+    if (res.ok) {
+      return { ok: true, detail: `HTTP ${res.status}` };
+    }
+    return { ok: false, detail: await anthropicProbeErrorDetail(res) };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { ok: false, detail: msg };
+  }
+}
+
+/** 使用当前默认供应商对多个 `model` 依次探测（不写回配置）。 */
+export async function runModelProbesForActiveProvider(
+  cfg: ConfigFile,
+  modelIds: string[],
+  lang: WizardLang,
+): Promise<ModelProbeRow[]> {
+  const active = cfg.active_provider;
+  const entry = active ? cfg.providers[active] : undefined;
+  const baseOk = Boolean(active && entry?.api_key?.trim() && effectiveClaudeBase(active, entry));
+  const skip = wizardCopy(lang).check.tryModelsNoActive;
+  if (!baseOk) {
+    return modelIds.map((model) => ({ model, ok: false, detail: skip }));
+  }
+  const out: ModelProbeRow[] = [];
+  for (const model of modelIds) {
+    const r = await probeAnthropicModelId(active!, entry!, model, lang);
+    out.push({ model, ...r });
+  }
+  return out;
+}
+
 function resolveCheckLang(cfg: ConfigFile, override?: WizardLang): WizardLang {
   return override ?? cfg.wizard_lang ?? 'zh';
 }
+
+export type ModelProbeRow = { model: string; ok: boolean; detail: string };
 
 export type CheckReportJson = {
   providers_with_keys: ProviderId[];
@@ -59,9 +163,12 @@ export type CheckReportJson = {
   settings_sync: ClaudeSettingsEnvCompare['kind'];
   drift_keys?: string[];
   settings_path: string;
+  /** 使用 --try-models 时附带 */
+  model_probes?: ModelProbeRow[];
 };
 
-type Gathered = {
+/** 单次健康检查的诊断结果（供向导等根据结果分支） */
+export type CheckGathered = {
   withKey: ProviderId[];
   active: ProviderId | null;
   entry: ProviderEntry | undefined;
@@ -74,11 +181,11 @@ type Gathered = {
   probeShownBySpinner: boolean;
 };
 
-async function gatherCheckDiagnostics(
+export async function gatherCheckDiagnostics(
   cfg: ConfigFile,
   lang: WizardLang,
   opts?: { probeSpinner?: boolean },
-): Promise<Gathered> {
+): Promise<CheckGathered> {
   const c = wizardCopy(lang).check;
   const withKey = PROVIDER_IDS.filter((id) => cfg.providers[id]?.api_key?.trim());
   const active = cfg.active_provider ?? null;
@@ -125,7 +232,7 @@ async function gatherCheckDiagnostics(
   };
 }
 
-function toJsonReport(d: Gathered): CheckReportJson {
+export function toJsonReport(d: CheckGathered): CheckReportJson {
   return {
     providers_with_keys: d.withKey,
     active_provider: d.active,
@@ -284,7 +391,7 @@ function printClaudeHelpCompact(
   console.log(chalk.yellow(tpl(c.compactHelpFix, { ID: String(active) })));
 }
 
-async function validatePrintCompact(cfg: ConfigFile, lang: WizardLang, d: Gathered): Promise<void> {
+async function validatePrintCompact(cfg: ConfigFile, lang: WizardLang, d: CheckGathered): Promise<void> {
   const c = wizardCopy(lang).check;
   const gap = async () => sleep(CHECK_COMPACT_GAP_MS);
 
@@ -368,13 +475,14 @@ export type ValidateAfterSaveOptions = {
 };
 
 /**
- * 保存配置后自动调用：结构检查 + 默认供应商端点探测 + settings 对齐 + 启动 Claude 提示
+ * 保存配置后自动调用：结构检查 + 默认供应商端点探测 + settings 对齐 + 启动 Claude 提示。
+ * `--json` 时返回 `undefined`；否则返回本次诊断 `CheckGathered`（供向导根据结果给出下一步）。
  */
 export async function validateAfterSave(
   cfg: ConfigFile,
   langOverride?: WizardLang,
   options?: ValidateAfterSaveOptions,
-): Promise<void> {
+): Promise<CheckGathered | undefined> {
   const lang = resolveCheckLang(cfg, langOverride);
   const c = wizardCopy(lang).check;
   const probeSpinner = options?.ui === 'check' && !options?.json;
@@ -382,13 +490,13 @@ export async function validateAfterSave(
 
   if (options?.json) {
     console.log(JSON.stringify(toJsonReport(d), null, 2));
-    return;
+    return undefined;
   }
 
   const compact = options?.ui === 'check' && !options?.verbose;
   if (compact) {
     await validatePrintCompact(cfg, lang, d);
-    return;
+    return d;
   }
 
   console.log(chalk.bold(c.title));
@@ -396,7 +504,7 @@ export async function validateAfterSave(
   if (d.withKey.length === 0) {
     console.log(chalk.yellow(c.noKeys));
     printClaudeHelp(cfg, false, false, lang);
-    return;
+    return d;
   }
 
   console.log(chalk.green(`${c.savedWithKey}${d.withKey.join(lang === 'zh' ? '、' : ', ')}`));
@@ -404,7 +512,7 @@ export async function validateAfterSave(
   if (!d.active) {
     console.log(chalk.yellow(c.noActive));
     printClaudeHelp(cfg, false, false, lang);
-    return;
+    return d;
   }
 
   if (!d.entry?.api_key?.trim()) {
@@ -417,7 +525,7 @@ export async function validateAfterSave(
       ),
     );
     printClaudeHelp(cfg, false, false, lang);
-    return;
+    return d;
   }
 
   if (d.claudeBase && d.probeResult) {
@@ -446,4 +554,5 @@ export async function validateAfterSave(
 
   printSettingsSyncBlock(lang, d.sync);
   printClaudeHelp(cfg, true, d.canBuildClaude, lang);
+  return d;
 }

@@ -19,7 +19,15 @@ import {
   mergeClaudeSettings,
 } from './claude.js';
 import terminalLink from 'terminal-link';
-import { formatSettingsSyncSummary, validateAfterSave } from './validate.js';
+import ora from 'ora';
+import {
+  formatSettingsSyncSummary,
+  gatherCheckDiagnostics,
+  probeAnthropicModelId,
+  runModelProbesForActiveProvider,
+  toJsonReport,
+  validateAfterSave,
+} from './validate.js';
 import {
   configPath,
   loadConfig,
@@ -284,11 +292,59 @@ async function cmdActive(id: ProviderId | undefined): Promise<void> {
   await validateAfterSave(loadConfig());
 }
 
-async function cmdCheck(opts?: { json?: boolean; verbose?: boolean }): Promise<void> {
-  await validateAfterSave(loadConfig(), undefined, {
-    json: opts?.json,
-    ...(!opts?.json && { ui: 'check' as const, verbose: Boolean(opts?.verbose) }),
+function parseTryModelsCsv(csv: string | undefined): string[] {
+  if (!csv?.trim()) return [];
+  return csv
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function checkUiLang(cfg: ConfigFile): WizardLang {
+  return cfg.wizard_lang === 'en' ? 'en' : 'zh';
+}
+
+async function printTryModelsProbesCli(cfg: ConfigFile, tryList: string[], lang: WizardLang): Promise<void> {
+  const c = wizardCopy(lang).check;
+  console.log(chalk.bold(c.tryModelsTitle));
+  const active = cfg.active_provider;
+  const entry = active ? cfg.providers[active] : undefined;
+  if (!active || !entry?.api_key?.trim() || !effectiveClaudeBase(active, entry)) {
+    console.log(chalk.yellow(c.tryModelsNoActive));
+    return;
+  }
+  for (const model of tryList) {
+    const sp = ora({ text: `${c.tryModelsProbing} ${model}…`, spinner: 'dots' }).start();
+    const r = await probeAnthropicModelId(active, entry, model, lang);
+    if (r.ok) sp.succeed(`${model} · ${r.detail}`);
+    else sp.fail(`${model} · ${r.detail}`);
+  }
+  console.log(chalk.dim(c.tryModelsFootnote));
+}
+
+async function cmdCheck(opts?: { json?: boolean; verbose?: boolean; tryModels?: string }): Promise<void> {
+  const tryList = parseTryModelsCsv(opts?.tryModels);
+  const cfg = loadConfig();
+  const lang = checkUiLang(cfg);
+
+  if (opts?.json) {
+    if (tryList.length > 0) {
+      const d = await gatherCheckDiagnostics(cfg, lang, { probeSpinner: false });
+      const model_probes = await runModelProbesForActiveProvider(cfg, tryList, lang);
+      console.log(JSON.stringify({ ...toJsonReport(d), model_probes }, null, 2));
+      return;
+    }
+    await validateAfterSave(cfg, undefined, { json: true });
+    return;
+  }
+
+  await validateAfterSave(cfg, undefined, {
+    ui: 'check',
+    verbose: Boolean(opts?.verbose),
   });
+  if (tryList.length > 0) {
+    await printTryModelsProbesCli(cfg, tryList, lang);
+  }
 }
 
 function cmdExport(provider: ProviderId | undefined, format: 'shell' | 'json'): void {
@@ -425,6 +481,45 @@ function wizardStatusFromCfg(cfg: ConfigFile, lang: WizardLang): WizardStatusSum
     keyMasked: maskKeyWizard(entry?.api_key, lang),
     settingsSync,
   };
+}
+
+/** 主菜单「同步」与检查后快捷「同步」共用：确认后写入 settings，再询问返回菜单或退出 */
+async function runWizardClaudeApplyFromCheck(): Promise<'continue_loop' | 'exit_wizard'> {
+  const cfg = loadConfig();
+  const id = cfg.active_provider;
+  if (!id || !cfg.providers[id]?.api_key?.trim()) {
+    const s0 = wizardCopy(wizardLangFromCfg(cfg));
+    console.log(chalk.yellow(s0.applyBlocked));
+    return 'continue_loop';
+  }
+  const applyLang = wizardLangFromCfg(cfg);
+  const sApply = wizardCopy(applyLang);
+  printClaudeGlobalWarning(sApply);
+  const ok = await promptWriteSettingsConfirm(sApply.confirmWriteShort, sApply);
+  if (!ok) {
+    console.log(chalk.dim(`${sApply.cancelled}\n`));
+    return 'continue_loop';
+  }
+  cmdClaudeApply(undefined);
+  console.log(chalk.green(sApply.applyOk));
+  printClaudeDoneHint(sApply);
+  printOperationHint(sApply);
+  const { afterApply } = await promptWithHints<{ afterApply: 'menu' | 'exit' }>(sApply, [
+    {
+      type: 'list',
+      name: 'afterApply',
+      message: sApply.afterApplyPrompt,
+      choices: [
+        { name: sApply.backMenu, value: 'menu' },
+        { name: sApply.exitWizard, value: 'exit' },
+      ],
+    },
+  ]);
+  if (afterApply === 'exit') {
+    console.log(chalk.dim(sApply.goodbye));
+    return 'exit_wizard';
+  }
+  return 'continue_loop';
 }
 
 async function wizardConfigureFlow(): Promise<void> {
@@ -581,61 +676,63 @@ async function runSetupWizard(): Promise<void> {
 
     if (action === 'check') {
       printSection(s.sectionChecking);
-      await validateAfterSave(loadConfig(), undefined, { ui: 'check', verbose: false });
+      const d = await validateAfterSave(loadConfig(), undefined, { ui: 'check', verbose: false });
       console.log(chalk.dim(s.wizardCheckVerboseHint));
       printOperationHint(s);
-      const { afterCheck } = await promptWithHints<{ afterCheck: 'menu' | 'exit' }>(s, [
+
+      type AfterCheck = 'apply' | 'configure' | 'menu' | 'exit';
+      const listChoices: Array<
+        { name: string; value: AfterCheck } | InstanceType<typeof inquirer.Separator>
+      > = [];
+      const suggestApply =
+        d != null &&
+        (d.sync.kind === 'drift' || d.sync.kind === 'no_file') &&
+        d.canBuildClaude &&
+        Boolean(d.active && d.entry?.api_key?.trim());
+      const suggestConfigure =
+        d != null &&
+        (d.withKey.length === 0 || !d.active || !d.entry?.api_key?.trim());
+      if (suggestApply) {
+        listChoices.push({ name: s.afterCheckApplyNow, value: 'apply' });
+      }
+      if (suggestConfigure) {
+        listChoices.push({ name: s.afterCheckConfigureNow, value: 'configure' });
+      }
+      if (listChoices.length > 0) {
+        listChoices.push(new inquirer.Separator(' ────────────── '));
+      }
+      listChoices.push(
+        { name: s.backMenu, value: 'menu' },
+        { name: s.exitWizard, value: 'exit' },
+      );
+
+      const { afterCheck } = await promptWithHints<{ afterCheck: AfterCheck }>(s, [
         {
           type: 'list',
           name: 'afterCheck',
           message: s.afterCheckPrompt,
-          choices: [
-            { name: s.backMenu, value: 'menu' },
-            { name: s.exitWizard, value: 'exit' },
-          ],
+          choices: listChoices,
         },
       ]);
       if (afterCheck === 'exit') {
         console.log(chalk.dim(s.goodbye));
         return;
       }
+      if (afterCheck === 'menu') {
+        continue;
+      }
+      if (afterCheck === 'apply') {
+        const r = await runWizardClaudeApplyFromCheck();
+        if (r === 'exit_wizard') return;
+        continue;
+      }
+      await wizardConfigureFlow();
       continue;
     }
 
     if (action === 'apply') {
-      cfg = loadConfig();
-      const id = cfg.active_provider;
-      if (!id || !cfg.providers[id]?.api_key?.trim()) {
-        console.log(chalk.yellow(s.applyBlocked));
-        continue;
-      }
-      const applyLang = wizardLangFromCfg(cfg);
-      const sApply = wizardCopy(applyLang);
-      printClaudeGlobalWarning(sApply);
-      const ok = await promptWriteSettingsConfirm(sApply.confirmWriteShort, sApply);
-      if (!ok) {
-        console.log(chalk.dim(`${sApply.cancelled}\n`));
-        continue;
-      }
-      cmdClaudeApply(undefined);
-      console.log(chalk.green(sApply.applyOk));
-      printClaudeDoneHint(sApply);
-      printOperationHint(sApply);
-      const { afterApply } = await promptWithHints<{ afterApply: 'menu' | 'exit' }>(sApply, [
-        {
-          type: 'list',
-          name: 'afterApply',
-          message: sApply.afterApplyPrompt,
-          choices: [
-            { name: sApply.backMenu, value: 'menu' },
-            { name: sApply.exitWizard, value: 'exit' },
-          ],
-        },
-      ]);
-      if (afterApply === 'exit') {
-        console.log(chalk.dim(sApply.goodbye));
-        return;
-      }
+      const r = await runWizardClaudeApplyFromCheck();
+      if (r === 'exit_wizard') return;
       continue;
     }
 
@@ -658,8 +755,12 @@ program
   .description('检查已保存的 Key / 默认供应商，并探测端点网络；提示如何启动 Claude Code')
   .option('--json', '以 JSON 输出结果（便于脚本）', false)
   .option('--verbose', '输出完整检查详情（含 settings 脚注与文档链接）', false)
-  .action((opts: { json: boolean; verbose: boolean }) =>
-    cmdCheck({ json: opts.json, verbose: opts.verbose }).catch(fatal),
+  .option(
+    '--try-models <csv>',
+    '逗号分隔模型 ID，对当前默认供应商依次 POST /v1/messages 试连通（如 glm-4.7,glm-5）',
+  )
+  .action((opts: { json: boolean; verbose: boolean; tryModels?: string }) =>
+    cmdCheck({ json: opts.json, verbose: opts.verbose, tryModels: opts.tryModels }).catch(fatal),
   );
 
 program
@@ -667,8 +768,12 @@ program
   .description('同 check：健康检查（兼容 chelper doctor 习惯）')
   .option('--json', '以 JSON 输出结果（便于脚本）', false)
   .option('--verbose', '输出完整检查详情（含 settings 脚注与文档链接）', false)
-  .action((opts: { json: boolean; verbose: boolean }) =>
-    cmdCheck({ json: opts.json, verbose: opts.verbose }).catch(fatal),
+  .option(
+    '--try-models <csv>',
+    '逗号分隔模型 ID，对当前默认供应商依次 POST /v1/messages 试连通（如 glm-4.7,glm-5）',
+  )
+  .action((opts: { json: boolean; verbose: boolean; tryModels?: string }) =>
+    cmdCheck({ json: opts.json, verbose: opts.verbose, tryModels: opts.tryModels }).catch(fatal),
   );
 
 program

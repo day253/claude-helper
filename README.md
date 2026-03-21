@@ -73,9 +73,10 @@ claude-helper check
 claude-helper check --verbose     # 完整详情（脚注、文档链接等）
 claude-helper doctor              # 与 check 相同（习惯 chelper doctor 时可用）
 claude-helper check --json        # 机器可读，便于脚本
+claude-helper check --try-models glm-4.7,glm-5,glm-4.5-air   # 对当前默认供应商逐个试模型（POST /v1/messages）
 ```
 
-默认 **精简** 输出；向导主菜单里的「运行检查」与上相同，结束后会提示可用 `--verbose` 查看完整报告。
+默认 **精简** 输出；向导主菜单里的「运行检查」与上相同，结束后会提示可用 `--verbose` 查看完整报告。`--try-models` 用于智谱等多模型 ID 排障，**不改** `config.yaml`；与 `--json` 合用时结果里带 `model_probes` 数组。
 
 ---
 
@@ -84,7 +85,7 @@ claude-helper check --json        # 机器可读，便于脚本
 | 命令 | 作用 |
 |------|------|
 | `claude-helper` / `init` | 交互主菜单 / 首次短路径配置 |
-| `check` / `doctor` | 检查 Key、默认供应商、Anthropic 根探测、与 settings 对齐情况 |
+| `check` / `doctor` | 检查 Key、默认供应商、Anthropic 根探测、与 settings 对齐；可选 `--try-models` 批量试模型 |
 | `set <id>` | 写 Key / `--base` / `--anthropic-base` / `--model`；无 flag 时可只交互填 Key |
 | `active [id]` | 查看或设置默认供应商 |
 | `list` / `show <id>` | 列表或查看单项（密钥脱敏） |
